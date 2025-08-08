@@ -105,7 +105,6 @@ code {
 /*custom below*/
 
 .banner {
-    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
@@ -120,11 +119,5 @@ code {
     object-fit: cover;
 }
 
-.main-content {
-    padding-top: 150px; /* same as banner height to avoid overlap */
-}
 
-.navbar {
-    margin-top: 150px; /* same as your banner height */
-}
 
