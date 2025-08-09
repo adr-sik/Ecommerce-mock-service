@@ -1,11 +1,54 @@
 @inherits LayoutComponentBase
 
-<div class="banner">
-    <img src="images/banner.jpg" alt="Banner" />
-</div>
+@* Required *@
+<MudThemeProvider />
+<MudPopoverProvider />
 
-<NavMenu />
+@* Needed for dialogs *@
+<MudDialogProvider />
 
-<div class="main-content">
-    @Body
-</div>
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
+<MudLayout>
+    <!-- Top App Bar -->
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudSpacer />
+        <MudText Typo="Typo.h6">E-Commerce Demo</MudText>
+        <MudSpacer />
+        <MudMenu Icon="@Icons.Material.Filled.Home" Color="Color.Inherit">
+            <MudMenuItem Href="/">Home</MudMenuItem>
+            <MudMenuItem Href="/Weather">Cart</MudMenuItem>
+            <MudMenuItem Href="/RadzenTest">Log In</MudMenuItem>
+        </MudMenu>
+    </MudAppBar>
+
+    <!-- Side Drawer -->
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Width="250px">
+        <MudNavMenu>
+            <MudText Typo="Typo.h6" Class="ml-4 mt-4">Categories</MudText>
+            <MudNavLink Href="/category/electronics">Electronics</MudNavLink>
+            <MudNavLink Href="/category/clothing">Clothing</MudNavLink>
+            <MudNavLink Href="/category/books">Books</MudNavLink>
+            <MudNavLink Href="/category/home-garden">Home & Garden</MudNavLink>
+            <MudNavLink Href="/category/sports">Sports</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <!-- Main Content -->
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
