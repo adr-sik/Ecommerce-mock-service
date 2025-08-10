@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject NavigationManager NavManager
 
 @* Required *@
 <MudThemeProvider />
@@ -38,6 +39,27 @@
 
     <!-- Main Content -->
     <MudMainContent>
+        <!-- Banner -->
+        @if (IsHomePage)
+        {
+            <MudPaper Class="hero-banner" Elevation="0" Square="true">
+                <div class="overlay">
+                    <MudContainer MaxWidth="MaxWidth.Large" Class="text-center py-10">
+                        <MudText Typo="Typo.h3" Color="Color.Primary" Class="mb-2">Welcome to Our Store</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="mb-4" Color="Color.Primary">
+                            Find the best deals on electronics, clothing, and more.
+                        </MudText>
+                    </MudContainer>
+                </div>
+            </MudPaper>
+        }
+        <!-- Filter Menu -->
+        @if (IsProductPage)
+        {
+            <MudToolBar>
+                <MudTooltip>"Smeg"</MudTooltip>
+            </MudToolBar>
+		}
         <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
             @Body
         </MudContainer>
@@ -45,6 +67,9 @@
 </MudLayout>
 
 @code {
+    private bool IsHomePage => NavManager.Uri == NavManager.BaseUri;
+    private bool IsProductPage => NavManager.Uri.Contains("/product/");
+
     private bool _drawerOpen = true;
 
     private void ToggleDrawer()
@@ -52,3 +77,20 @@
         _drawerOpen = !_drawerOpen;
     }
 }
+
+<style>
+    .hero-banner {
+        background-image: url('images/banner.jpg');
+        background-size: cover;
+        background-position: center;
+        height: 300px;
+    }
+
+        .hero-banner .overlay {
+            background-color: rgba(255, 255, 255, 0.5); /* light overlay */
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+</style>
+
