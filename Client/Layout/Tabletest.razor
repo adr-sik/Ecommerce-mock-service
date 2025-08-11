@@ -1,0 +1,153 @@
+﻿@page "/test"
+@using MudBlazor
+@using System.Linq
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h4" Class="mb-6">Product Catalog (Grid with Filters)</MudText>
+
+<MudGrid Spacing="3" Class="mb-6">
+    @* Price Filters *@
+    <MudItem xs="12" sm="6" md="4">
+        <MudNumericField T="decimal?"
+                         @bind-Value="minPriceFilter"
+                         Label="Min Price"
+                         Variant="Variant.Outlined"
+                         Clearable="true"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                         Placeholder="e.g., 50"
+                         Culture="@(System.Globalization.CultureInfo.InvariantCulture)" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="4">
+        <MudNumericField T="decimal?"
+                         @bind-Value="maxPriceFilter"
+                         Label="Max Price"
+                         Variant="Variant.Outlined"
+                         Clearable="true"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                         Placeholder="e.g., 200"
+                         Culture="@(System.Globalization.CultureInfo.InvariantCulture)" />
+    </MudItem>
+
+    @* Name Search Filter *@
+    <MudItem xs="12" sm="12" md="4">
+        <MudTextField T="string"
+                      @bind-Value="searchText"
+                      Label="Search by Name"
+                      Variant="Variant.Outlined"
+                      Clearable="true"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      AdornmentColor="Color.Primary"
+                      Placeholder="e.g., Laptop" />
+    </MudItem>
+</MudGrid>
+
+<MudDivider Class="my-6" />
+
+@* Display the filtered products in a grid *@
+<MudGrid Spacing="3">
+    @if (FilteredProducts.Any())
+    {
+        @foreach (var product in FilteredProducts)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="4" Class="rounded-lg h-full flex flex-col cursor-pointer"
+                         @onclick="() => NavigateToProduct(product.Name)">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="font-bold">@product.Name</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Class="flex-grow flex flex-col items-center justify-center p-4">
+                        <MudText Typo="Typo.h1" Class="text-center mb-2">@product.Emoji</MudText>
+                        <MudText Typo="Typo.h5" Class="font-semibold text-blue-600">
+                            @product.Price.ToString("C2", System.Globalization.CultureInfo.CurrentCulture)
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions Class="justify-end p-2">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ShoppingCart">
+                            Add to Cart
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    }
+    else
+    {
+        <MudItem xs="12" Class="text-center py-8">
+            <MudText Typo="Typo.subtitle1" Class="text-gray-500">
+                No products found matching your criteria. 😔
+            </MudText>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    // Data model for your products, now with an Emoji property
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string Emoji { get; set; } = string.Empty; // New property for emoji representation
+    }
+
+    // List of all products (your data source)
+    private List<Product> AllProducts = new List<Product>
+    {
+        new Product { Id = 1, Name = "Laptop Pro", Price = 1200.00M, Emoji = "💻" },
+        new Product { Id = 2, Name = "Gaming Mouse", Price = 25.50M, Emoji = "🖱️" },
+        new Product { Id = 3, Name = "Mechanical Keyboard", Price = 75.99M, Emoji = "⌨️" },
+        new Product { Id = 4, Name = "Ultrawide Monitor", Price = 300.00M, Emoji = "🖥️" },
+        new Product { Id = 5, Name = "HD Webcam", Price = 50.25M, Emoji = "📸" },
+        new Product { Id = 6, Name = "Noise-Cancelling Headphones", Price = 150.00M, Emoji = "🎧" },
+        new Product { Id = 7, Name = "Portable SSD", Price = 90.75M, Emoji = "💾" },
+        new Product { Id = 8, Name = "USB-C Hub", Price = 35.00M, Emoji = "🔌" },
+        new Product { Id = 9, Name = "Condenser Microphone", Price = 85.00M, Emoji = "🎤" },
+        new Product { Id = 10, Name = "Laptop Stand", Price = 45.99M, Emoji = " elevating " }
+    };
+
+    // Filter properties
+    private decimal? minPriceFilter;
+    private decimal? maxPriceFilter;
+    private string searchText = string.Empty; // Property for name search
+
+    // Computed property for filtered products
+    private List<Product> FilteredProducts => AllProducts.Where(FilterProducts).ToList();
+
+    // The main filtering logic
+    private bool FilterProducts(Product product)
+    {
+        // Price Filter
+        if (minPriceFilter.HasValue && product.Price < minPriceFilter.Value)
+        {
+            return false;
+        }
+        if (maxPriceFilter.HasValue && product.Price > maxPriceFilter.Value)
+        {
+            return false;
+        }
+
+        // Name Search Filter
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            if (!product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true; // Product passes all active filters
+    }
+
+    // Method to handle navigation when a product card is clicked
+    private void NavigateToProduct(string productName)
+    {
+        // Encodes the product name to be safe for URL
+        var encodedProductName = Uri.EscapeDataString(productName);
+        NavigationManager.NavigateTo($"/test/{encodedProductName}");
+    }
+}

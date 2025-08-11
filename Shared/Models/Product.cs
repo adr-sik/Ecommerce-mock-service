@@ -8,15 +8,19 @@ using System.Threading.Tasks;
 
 namespace Shared.Models
 {
-    public class Product
+    public abstract class Product
     {
         public int Id { get; set; }
+        [Required] 
+        public string Brand { get; set; } = null!;
         [Required]
-        public string Name { get; set; } = null!;
+        public string Model { get; set; } = null!;
+        
         [Column(TypeName = "decimal(10,2)")]
         public decimal Price { get; set; }
         public string? Description { get; set; }
         public int Stock {  get; set; }
+        public int? Sale { get; set; }
         public ICollection<Order> Orders { get; set; } = new List<Order>();
         public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
         public ICollection<Image> Images { get; set; } = new List<Image>();

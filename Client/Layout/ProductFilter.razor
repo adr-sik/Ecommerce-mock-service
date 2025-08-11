@@ -1,0 +1,38 @@
+﻿@inject NavigationManager NavManager
+
+<!-- Filter for all products -->
+<MudPaper Elevation="25">
+	<MudToolBar>
+		<MudNumericField @bind-Value="minPrice" Label="Min. price" Format="F2" Variant="Variant.Outlined" />
+		<MudNumericField @bind-Value="maxPrice" Label="Max. price" Format="F2" Variant="Variant.Outlined" />
+	</MudToolBar>
+
+	<!-- Filter specific to category -->
+	<MudToolBar>
+		<p>This filter is for @category</p>
+	</MudToolBar>
+</MudPaper>
+
+@code {
+	[Parameter]
+	public string category { get; set; }
+
+	private decimal minPrice { get; set; }
+	private decimal maxPrice { get; set; }
+
+	private void ChooseFilter(string url)
+	{
+		switch(url)
+		{
+			case "phones":
+				NavManager.NavigateTo("/products/electronics/phones");
+				break;
+			case "laptops":
+				NavManager.NavigateTo("/products/electronics/laptops");
+				break;
+			case "headphones":
+				NavManager.NavigateTo("/products/electronics/headphones");
+				break;
+		}		
+	}
+}

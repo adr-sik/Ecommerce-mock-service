@@ -20,8 +20,8 @@
         <MudSpacer />
         <MudMenu Icon="@Icons.Material.Filled.Home" Color="Color.Inherit">
             <MudMenuItem Href="/">Home</MudMenuItem>
-            <MudMenuItem Href="/Weather">Cart</MudMenuItem>
-            <MudMenuItem Href="/RadzenTest">Log In</MudMenuItem>
+            <MudMenuItem Href="/weather">Cart</MudMenuItem>
+            <MudMenuItem Href="/products">Log In</MudMenuItem>
         </MudMenu>
     </MudAppBar>
 
@@ -29,11 +29,11 @@
     <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Width="250px">
         <MudNavMenu>
             <MudText Typo="Typo.h6" Class="ml-4 mt-4">Categories</MudText>
-            <MudNavLink Href="/category/electronics">Electronics</MudNavLink>
-            <MudNavLink Href="/category/clothing">Clothing</MudNavLink>
-            <MudNavLink Href="/category/books">Books</MudNavLink>
-            <MudNavLink Href="/category/home-garden">Home & Garden</MudNavLink>
-            <MudNavLink Href="/category/sports">Sports</MudNavLink>
+            <MudNavLink Href="/products/electronics">Electronics</MudNavLink>
+            <MudNavLink Href="/products/clothing">Clothing</MudNavLink>
+            <MudNavLink Href="/products/books">Books</MudNavLink>
+            <MudNavLink Href="/products/home-garden">Home & Garden</MudNavLink>
+            <MudNavLink Href="/products/sports">Sports</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
@@ -56,9 +56,8 @@
         <!-- Filter Menu -->
         @if (IsProductPage)
         {
-            <MudToolBar>
-                <MudTooltip>"Smeg"</MudTooltip>
-            </MudToolBar>
+            <ProductFilter />
+            <h1>ass</h1>
 		}
         <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
             @Body
@@ -68,7 +67,8 @@
 
 @code {
     private bool IsHomePage => NavManager.Uri == NavManager.BaseUri;
-    private bool IsProductPage => NavManager.Uri.Contains("/product/");
+    //private bool IsProductPage => NavManager.Uri.Contains("products");
+    private bool IsProductPage = false;
 
     private bool _drawerOpen = true;
 

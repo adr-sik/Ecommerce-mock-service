@@ -36,6 +36,17 @@ namespace Server
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+
+                using (var scope = app.Services.CreateScope())
+                {
+                    var services = scope.ServiceProvider;
+                    var context = services.GetRequiredService<EcommerceContext>();
+
+                    context.Database.EnsureDeleted();
+                    context.Database.Migrate();
+
+                    SeedData.Initialize(context);
+                }
             }
 
             app.UseHttpsRedirection();

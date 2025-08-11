@@ -1,4 +1,4 @@
-@page "/weather"
+@page "/products"
 @using Shared.Models
 @inject Services.ProductService productService
 
@@ -27,7 +27,7 @@ else
             @foreach (var forecast in forecasts)
             {
                 <tr>
-                    <td>@forecast.Name</td>
+                    <td>@forecast.Brand</td>
                     <td>@forecast.Description</td>
                     <td>@forecast.Price</td>
                     <td>@forecast.Stock</td>

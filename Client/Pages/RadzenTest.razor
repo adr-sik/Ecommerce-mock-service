@@ -1,11 +1,18 @@
-@page "/RadzenTest"
+@page "/products/{category}"
 @using Shared.Models
 
 <PageTitle>Weather</PageTitle>
+<MudPaper Elevation="25">
+    <MudToolBar>
+        <MudNumericField @bind-Value="minPrice" Label="Min. price" Format="F1" Variant="Variant.Outlined" @onblur="() => OnPriceChanged()" />
+        <MudNumericField @bind-Value="maxPrice" Label="Max. price" Format="F1" Variant="Variant.Outlined" @onblur="() => OnPriceChanged()" />
+    </MudToolBar>
 
-<h1>Weather</h1>
-
-<p>This component demonstrates fetching data from the server.</p>
+    <!-- Filter specific to category -->
+    <MudToolBar>
+        <p>This filter is for @category</p>
+    </MudToolBar>
+</MudPaper>
 
 @if (forecasts == null)
 {
@@ -23,10 +30,10 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
+            @foreach (var forecast in filteredProducts ?? forecasts)
             {
                 <tr>
-                    <td>@forecast.Name</td>
+                    <td>@forecast.Brand</td>
                     <td>@forecast.Description</td>
                     <td>@forecast.Price</td>
                     <td>@forecast.Stock</td>
@@ -37,14 +44,28 @@ else
 }
 
 @code {
+    [Parameter]
+    public string category { get; set; }
+
+    private decimal? minPrice;
+    private decimal? maxPrice;
+
     private List<Product> forecasts = null;
+    private List<Product> filteredProducts;
 
     protected override async Task OnInitializedAsync()
     {
         forecasts = new List<Product>
         {
-            new Product { Id = 1, Name = "Mock Product A", Price = 9.99m, Description = "Sample description", Stock = 10 },
-            new Product { Id = 2, Name = "Mock Product B", Price = 19.99m, Description = "Another sample", Stock = 5 }
+
         };
     }
+
+    private void OnPriceChanged()
+    {
+		Console.WriteLine($"Min Price: {minPrice}, Max Price: {maxPrice}");
+        filteredProducts = forecasts
+            .Where(p => p.Price >= minPrice && p.Price <= maxPrice)
+			.ToList();
+	}
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Shared.Models;
+using Shared.Models.ProductTypes;
+using Shared.Models.ProductComponents;
 namespace Server.Data
 {
     public class EcommerceContext : DbContext
@@ -11,6 +13,17 @@ namespace Server.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<OrderProduct> OrderProducts { get; set; }
+        public DbSet<Image> Images { get; set; }
+        // Product Types
+        public DbSet<Phone> Phones { get; set; }
+        public DbSet<Laptop> Laptops { get; set; }
+        public DbSet<Headphones> Headphones { get; set; }
+        // Product Components
+        public DbSet<Display> Displays { get; set; }
+        public DbSet<Cpu> Cpus { get; set; }
+        public DbSet<Gpu> Gpus { get; set; }
+        public DbSet<Camera> Cameras { get; set; }
+        public DbSet<Wireless> Wirelesses { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -21,6 +34,20 @@ namespace Server.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Phone>().ToTable("Phones");
+
+            modelBuilder.Entity<Laptop>().UseTptMappingStrategy();
+
+            modelBuilder.Entity<Headphones>().UseTptMappingStrategy();
+
+            modelBuilder.Entity<Cpu>()
+                .Property(e => e.Brand)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Headphones>()
+                .Property(e => e.HeadphoneType)
+                .HasConversion<string>();
 
             modelBuilder.Entity<Order>()
                 .HasMany(e => e.Products)

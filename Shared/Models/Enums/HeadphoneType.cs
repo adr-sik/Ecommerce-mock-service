@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared.Models.Components
+namespace Shared.Models.Enums
 {
-    internal class CoolingSystem
+    public enum HeadphoneType
     {
+        OverEar,
+        OnEar,
+        InEar,
+        Earbuds
     }
 }
