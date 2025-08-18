@@ -11,7 +11,7 @@ using Shared.Models.DTOs.ProductTypesDTOs;
 namespace Shared.Models.DTOs
 {
     [JsonDerivedType(typeof(PhoneDTO), "phone")]
-    [JsonDerivedType(typeof(PhoneDTO), "laptop")]
+    [JsonDerivedType(typeof(LaptopDTO), "laptop")]
     [JsonDerivedType(typeof(HeadphonesDTO), "headphones")]
     public class ProductDTO
     {
