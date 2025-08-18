@@ -1,7 +1,8 @@
+using Client.Components;
 using Client.Services;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
+using Shared.Models.DTOs;
+using Shared.Models.DTOs.ProductTypesDTOs;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -12,11 +13,13 @@ namespace Client
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("#app");
-            builder.RootComponents.Add<HeadOutlet>("head::after");
+            var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddMudServices();
+
+            // Add services to the container.
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
 
             var jsonSerializerOptions = new JsonSerializerOptions
             {
@@ -26,14 +29,37 @@ namespace Client
             jsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
             builder.Services.AddSingleton(jsonSerializerOptions);
 
-            var apiUrl = builder.Configuration["ApiUrl"] ?? builder.HostEnvironment.BaseAddress;
-           
-            AddApiService<ProductService>(builder, apiUrl);
+            var apiUrl = builder.Configuration["ApiUrl"];
 
-            await builder.Build().RunAsync();
+            AddApiService<ProductService<ProductDTO>>(builder, apiUrl);
+            AddApiService<ProductService<LaptopDTO>>(builder, apiUrl);
+            AddApiService<ProductService<PhoneDTO>>(builder, apiUrl);
+            AddApiService<ProductService<HeadphonesDTO>>(builder, apiUrl);
+
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
+            app.UseAntiforgery();
+
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode();
+
+            app.UseStatusCodePagesWithRedirects("/notfound");
+
+            app.Run();
         }
 
-        private static void AddApiService<TService>(WebAssemblyHostBuilder builder, string apiUrl) where TService : class
+        private static void AddApiService<TService>(WebApplicationBuilder builder, string apiUrl) where TService : class
         {
             Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
             builder.Services.AddHttpClient<TService>(client =>

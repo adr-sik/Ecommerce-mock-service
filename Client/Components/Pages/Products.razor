@@ -1,0 +1,40 @@
+@page "/products/{Category}"
+@using Client.Components.Layout
+@using Client.Components.Util
+@using Shared.Models.DTOs
+@using Shared.Models.DTOs.ProductTypesDTOs
+@using Services
+@using Shared.Models.Filters
+@inject NavigationManager NavigationManager
+@inject IServiceProvider ServiceProvider
+
+<h3>@Category.ToUpperInvariant()</h3>
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>@products.Count</p>
+    <ProductGrid products="@products" Category="@Category" />
+}
+
+@code {
+    [Parameter]
+    public string Category { get; set; }
+
+    private List<ProductDTO> products = null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var query = uri.Query;
+
+        Type dtoType = ProductCategoryMap.GetDtoType(Category);
+        var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
+        IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
+
+        products = await service.GetAllProductsAsync(query);
+    }
+}

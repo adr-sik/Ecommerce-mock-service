@@ -1,0 +1,78 @@
+﻿@page "/products/{Category}/{ProductId:int}/{ProductSlug?}"
+@using Humanizer
+@using Shared.Models.DTOs.ProductTypesDTOs
+@using Shared.Models.DTOs
+@using Services
+@using Client.Components.Util
+@using System.Reflection
+@inject NavigationManager NavigationManager
+@inject IServiceProvider ServiceProvider
+
+@if (product != null)
+{
+    <h3>@product.Brand @product.Model</h3>
+    <MudImage Src="@product.Images.First().Path"></MudImage>
+    if (product.Sale != null && product.Sale > 0)
+    {
+        <h3 style="color:red;">@product.Price</h3>
+        <h3 style="display:inline;">@product.GetPriceWithSale()</h3>
+    }
+    else
+    {
+        <h3>@product.Price</h3>
+    }
+    <table class="table">
+        <tbody>
+            @foreach (var property in GetProductProperties())
+            {
+                var value = property.GetValue(product);
+
+                <tr>                  
+                    @if (value != null)
+                    {
+                        <td>@property.Name.Humanize()</td>
+                        <td>@value.ToString()</td>
+                    }                 
+                </tr>
+			}
+        </tbody>
+    </table>
+}
+else
+{
+    <p><em>Loading... @Category</em></p>
+}
+
+@code {
+    [Parameter]
+    public string Category { get; set; }
+    [Parameter]
+    public int ProductId { get; set; }
+    [Parameter]
+    public string ProductSlug { get; set; }
+
+    private ProductDTO product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Type dtoType = ProductCategoryMap.GetDtoType(Category);
+
+        var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
+        dynamic service = ServiceProvider.GetService(serviceType);
+
+        Console.WriteLine($"Using service type: {serviceType.Name} for category: {Category}");
+
+        product = await service.GetByIdAsync(ProductId);
+    }
+
+    private IEnumerable<PropertyInfo> GetProductProperties()
+    {
+
+        // List of property names to ignore
+        var ignoreProps = new[] { "Id", "Images", "Sale", "Description", "Model", "Brand", "Price"};
+        var properties = product.GetType()
+                                .GetProperties()
+                                .Where(p => !ignoreProps.Contains(p.Name));
+		return properties;
+    }
+}

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Shared.Models.DTOs;
 
 namespace Client.Services
 {
@@ -18,11 +19,12 @@ namespace Client.Services
             _jsonOptions = jsonOptions;
         }
 
-        public async Task<List<T>> GetAllAsync(string? str)
+        public virtual async Task<List<T>> GetAllAsync(string? query = "")
         {
             try
             {
-                var items = await _http.GetFromJsonAsync<List<T>>(Endpoint + $"/{str}", _jsonOptions);
+                var items = await _http.GetFromJsonAsync<List<T>>($"{Endpoint}{query}", _jsonOptions);
+                Console.WriteLine($"Fetched {items?.Count ?? 0} items from {Endpoint}");
                 return items ?? new List<T>();
             }
             catch (Exception ex)
@@ -32,7 +34,7 @@ namespace Client.Services
             }
         }
 
-        protected async Task<T?> GetByIdAsync(int id)
+        public virtual async Task<T?> GetByIdAsync(int id)
         {
             try
             {

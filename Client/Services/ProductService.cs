@@ -5,17 +5,23 @@ using Humanizer;
 
 namespace Client.Services
 {
-    public class ProductService : ServiceBase<ProductDTO>
+    public class ProductService<T> : ServiceBase<T>, IProductService where T : ProductDTO
     {
-        protected override string Endpoint => "api/products";
+        protected override string Endpoint => $"api/products/{typeof(T).Name.ToLowerInvariant().Replace("dto", "").Pluralize()}";
         public ProductService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
-        public async Task<T> GetProductOfType<T>(int id) where T : class
-        {
-            var typeName = typeof(T).Name.ToLowerInvariant().Replace("dto", "").Pluralize();
 
-            var response = await _http.GetAsync($"{Endpoint}/{typeName}/{id}");
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
+        public async Task<List<ProductDTO>> GetAllProductsAsync(string? query = "")
+        {
+            try
+            {
+                var items = await this.GetAllAsync(query);
+                return items.Cast<ProductDTO>().ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error fetching items from {Endpoint}: {ex.Message}");
+                return new List<ProductDTO>();
+            }
         }
     }
 }

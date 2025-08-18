@@ -1,4 +1,7 @@
-﻿@inject NavigationManager NavManager
+﻿@using Shared.Models.DTOs
+@typeparam T where T : ProductDTO
+@inject Services.ProductService<T> ProductService
+@inject NavigationManager NavManager
 
 <!-- Filter for all products -->
 <MudPaper Elevation="25">
@@ -9,13 +12,13 @@
 
 	<!-- Filter specific to category -->
 	<MudToolBar>
-		<p>This filter is for @category</p>
+		<p>This filter is for @Category</p>
 	</MudToolBar>
 </MudPaper>
 
 @code {
 	[Parameter]
-	public string category { get; set; }
+	public string Category { get; set; } = "";
 
 	private decimal minPrice { get; set; }
 	private decimal maxPrice { get; set; }
