@@ -1,8 +1,10 @@
 ﻿using Bogus;
 using Shared.Models;
-using Shared.Models.ProductComponents;
-using Shared.Models.ProductTypes;
+using Server.Models.ProductComponents;
+using Server.Models.ProductTypes;
 using Shared.Models.Enums;
+using Server.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Server.Data
 {
@@ -27,12 +29,12 @@ namespace Server.Data
                     CpuBrand.Intel,
                     CpuBrand.AMD
                 };
-            var phoneCpus = new Faker<Cpu>()
+            var laptopCpus = new Faker<Cpu>()
                 .RuleFor(c => c.Brand, f => f.PickRandom(allowedBrands))
                 .RuleFor(c => c.Model, f => f.Commerce.ProductName())
                 .RuleFor(c => c.NumberOfCores, f => f.Random.Int(4, 10))
-                .Generate(10);
-            context.Cpus.AddRange(phoneCpus);
+                .Generate(15);
+            context.Cpus.AddRange(laptopCpus);
 
             allowedBrands = new List<CpuBrand>
                 {
@@ -41,33 +43,38 @@ namespace Server.Data
                     CpuBrand.MediaTek,
                     CpuBrand.Google
                 };
-            var laptopCpus = new Faker<Cpu>()
+            var phoneCpus = new Faker<Cpu>()
                 .RuleFor(c => c.Brand, f => f.PickRandom(allowedBrands))
                 .RuleFor(c => c.Model, f => f.Commerce.ProductName())
                 .RuleFor(c => c.NumberOfCores, f => f.Random.Int(2, 24))
-                .Generate(10);
-            context.Cpus.AddRange(laptopCpus);
+                .Generate(15);
+            context.Cpus.AddRange(phoneCpus);
 
             var phoneDisplays = new Faker<Display>()
-                .RuleFor(d => d.ScreenSizeInches, f => f.Random.Double(13.0, 32.0))
+                .RuleFor(d => d.ScreenSizeInches, f => Math.Round(f.Random.Double(5.5, 7.0), 1))
                 .RuleFor(d => d.Resolution, f => f.PickRandom("720x1280", "1080x2400", "1440x3200"))
                 .RuleFor(d => d.RefreshRateHz, f => f.PickRandom(60, 90, 120, 144))
                 .Generate(10);
             context.Displays.AddRange(phoneDisplays);
 
             var laptopDisplays = new Faker<Display>()
-                .RuleFor(d => d.ScreenSizeInches, f => f.Random.Double(13.0, 17.0))
+                .RuleFor(d => d.ScreenSizeInches, f => Math.Round(f.Random.Double(13.0, 32.0), 1))
                 .RuleFor(d => d.Resolution, f => f.PickRandom("1920x1080", "2560x1440", "3840x2160"))
                 .RuleFor(d => d.RefreshRateHz, f => f.PickRandom(60, 120, 144, 240, 360))
-                .Generate(10);
+                .Generate(30);
             context.Displays.AddRange(laptopDisplays);
 
             var gpus = new Faker<Gpu>()
                 .RuleFor(g => g.Brand, f => f.PickRandom("Nvidia", "AMD", "Radeon"))
                 .RuleFor(g => g.Model, f => f.Commerce.ProductName())
                 .RuleFor(g => g.VRAM, f => f.Random.Int(2, 24))
-                .Generate(10);
+                .Generate(30);
             context.Gpus.AddRange(gpus);
+
+            var rams = new Faker<Ram>()
+                .RuleFor(r => r.Capacity, f => f.PickRandom(8, 16, 32))
+                .Generate(10);
+            context.Rams.AddRange(rams);
 
             //Seeding ProductTypes
             var phoneBrands = new[] { "Apple", "Samsung", "Sony", "Google", "Xiaomi", "OnePlus" };
@@ -94,12 +101,15 @@ namespace Server.Data
                 .RuleFor(h => h.Stock, f => f.Random.Int(0, 100))
                 .RuleFor(h => h.Sale, f => f.Random.Bool(0.8f) ? null : f.Random.Int(10, 50))
                 .RuleFor(h => h.HeadphoneType, f => f.PickRandom<HeadphoneType>())
-                .RuleFor(h => h.Wireless, f => f.Random.Bool(0.3f) ? null : new Wireless 
-                    {                   
-                        BatteryLife = f.Random.Int(24, 72),
-                        ChargingCase = f.Random.Bool()
-                    })
-                .Generate(10);
+                .RuleFor(h => h.BatteryLife, f => f.Random.Int(10, 40))
+                .RuleFor(h => h.ChargingAccessory, f => f.Random.Bool(0.3f) ? null : new ChargingAccessory
+                {                   
+                        Name = f.Commerce.ProductName(),
+                        BatteryCapacity = f.Random.Int(1000, 5000),
+                        IsFastCharging = f.Random.Bool(0.5f),
+                        Port = f.PickRandom("USB-C", "Lightning", "3.5mm")
+                })
+                .Generate(100);
             context.Headphones.AddRange(headphones);
 
 
@@ -125,8 +135,8 @@ namespace Server.Data
                 .RuleFor(l => l.Display, f => f.PickRandom(laptopDisplays))
                 .RuleFor(l => l.Cpu, f => f.PickRandom(laptopCpus))
                 .RuleFor(l => l.Gpu, f => f.PickRandom(gpus))
-                .RuleFor(l => l.Ram, f => f.PickRandom(8, 16, 32))
-                .Generate(10);
+                .RuleFor(l => l.Ram, f => f.PickRandom(rams))
+                .Generate(100);
             context.Laptops.AddRange(laptops);
 
             var phones = new Faker<Phone>()
@@ -152,7 +162,7 @@ namespace Server.Data
                 .RuleFor(p => p.Camera, f => f.PickRandom(cameras))
                 .RuleFor(p => p.Display, f => f.PickRandom(phoneDisplays))
                 .RuleFor(p => p.Cpu, f => f.PickRandom(phoneCpus))
-                .Generate(10);
+                .Generate(100);
             context.Phones.AddRange(phones);
             context.SaveChanges();
 
@@ -166,7 +176,7 @@ namespace Server.Data
             foreach(Product product in products)
             {
                 var image = new Faker<Image>()
-                    .RuleFor(i => i.Path, f => $"https://placehold.co/400x400/?text={product.Model}")
+                    .RuleFor(i => i.Path, f => $"https://placehold.co/400x400/{new Faker().Commerce.Color().Replace(" ","")}/{new Faker().Commerce.Color().Replace(" ", "")}/?text={product.Model}")
                     .RuleFor(i => i.ProductId, f => product.Id)
                     .Generate();
                 thumbnailImages.Add(image);

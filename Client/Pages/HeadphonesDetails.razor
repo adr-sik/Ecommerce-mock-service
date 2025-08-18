@@ -1,0 +1,35 @@
+﻿@page "/headphones/{ProductId:int}/{ProductSlug}"
+@using Shared.Models
+@using Shared.Models.DTOs.ProductTypesDTOs
+@using Shared.Models.DTOs
+@inject Services.ProductService productService
+
+@if (product != null)
+{
+    <h3>@product.Model @product.GetType().Name</h3>
+    @if (product.GetType().ToString().Contains("Headphones"))
+    {
+        if (product.Wireless != null)
+        {
+            <h3>@product.Wireless.BatteryLife</h3>
+        } else
+        {
+			<h3>wired</h3>
+        }
+    }
+}
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+
+    [Parameter]
+    public string ProductSlug { get; set; }
+
+    private HeadphonesDTO product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        product = await productService.GetProductOfType<HeadphonesDTO>(ProductId);
+    }
+}

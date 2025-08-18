@@ -1,0 +1,33 @@
+﻿<!--
+@page "/{Category}/{ProductId:int}/{ProductSlug}"
+@using Shared.Models
+@using Shared.Models.DTOs.ProductTypesDTOs
+@using Shared.Models.DTOs
+@inject Services.ProductService productService
+
+@if (product != null)
+{
+    <h3>@product.Model @product.GetType().Name</h3>
+    @if (product.GetType().ToString().Contains("Laptop"))
+    {
+        <h3>@product.Model @product</h3>
+    }
+}
+
+@code {
+    [Parameter]
+    public string Category { get; set; }
+
+    [Parameter]
+    public int ProductId { get; set; }
+
+    [Parameter]
+    public string ProductSlug { get; set; }
+
+    private dynamic product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        product = await productService.GetByIdAsync(ProductId);
+    }
+}-->

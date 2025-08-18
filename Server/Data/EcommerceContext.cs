@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Shared.Models;
-using Shared.Models.ProductTypes;
-using Shared.Models.ProductComponents;
+using Server.Models;
+using Server.Models.ProductTypes;
+using Server.Models.ProductComponents;
 namespace Server.Data
 {
     public class EcommerceContext : DbContext
@@ -11,6 +11,7 @@ namespace Server.Data
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<Computer> Computers { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<OrderProduct> OrderProducts { get; set; }
         public DbSet<Image> Images { get; set; }
@@ -23,7 +24,8 @@ namespace Server.Data
         public DbSet<Cpu> Cpus { get; set; }
         public DbSet<Gpu> Gpus { get; set; }
         public DbSet<Camera> Cameras { get; set; }
-        public DbSet<Wireless> Wirelesses { get; set; }
+        public DbSet<ChargingAccessory> ChargingAccessory { get; set; }
+        public DbSet<Ram> Rams { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -34,12 +36,6 @@ namespace Server.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<Phone>().ToTable("Phones");
-
-            modelBuilder.Entity<Laptop>().UseTptMappingStrategy();
-
-            modelBuilder.Entity<Headphones>().UseTptMappingStrategy();
 
             modelBuilder.Entity<Cpu>()
                 .Property(e => e.Brand)

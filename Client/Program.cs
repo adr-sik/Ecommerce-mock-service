@@ -2,6 +2,9 @@ using Client.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Client
 {
@@ -15,12 +18,17 @@ namespace Client
 
             builder.Services.AddMudServices();
 
+            var jsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+            };
+            jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            jsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+            builder.Services.AddSingleton(jsonSerializerOptions);
+
             var apiUrl = builder.Configuration["ApiUrl"] ?? builder.HostEnvironment.BaseAddress;
            
-            AddApiService<OrderService>(builder, apiUrl);
             AddApiService<ProductService>(builder, apiUrl);
-            AddApiService<UserService>(builder, apiUrl);
-            AddApiService<DesignTimeProductService>(builder, apiUrl);
 
             await builder.Build().RunAsync();
         }

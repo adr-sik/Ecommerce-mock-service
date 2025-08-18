@@ -1,15 +1,21 @@
-﻿using Shared.Models;
+﻿using Shared.Models.DTOs;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Humanizer;
 
 namespace Client.Services
 {
-    public class ProductService : ServiceBase<Product>
+    public class ProductService : ServiceBase<ProductDTO>
     {
         protected override string Endpoint => "api/products";
-        public ProductService(HttpClient httpClient) : base(httpClient) { }
-        public virtual Task<List<Product>> GetProducts() => GetAllAsync();
-        public Task<Product?> GetProduct(int id) => GetByIdAsync(id);
-        public Task<Product?> PutProduct(int id, Product product) => PutAsync(id, product);
-        public Task<Product?> PostProduct(Product product) => PostAsync(product);
-        public Task<bool> DeleteProduct(int id) => DeleteAsync(id);
+        public ProductService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
+        public async Task<T> GetProductOfType<T>(int id) where T : class
+        {
+            var typeName = typeof(T).Name.ToLowerInvariant().Replace("dto", "").Pluralize();
+
+            var response = await _http.GetAsync($"{Endpoint}/{typeName}/{id}");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
+        }
     }
 }
