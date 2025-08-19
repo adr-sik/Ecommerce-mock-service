@@ -59,6 +59,7 @@ namespace Client
             app.Run();
         }
 
+        // Service registraction helper
         private static void AddApiService<TService>(WebApplicationBuilder builder, string apiUrl) where TService : class
         {
             Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");

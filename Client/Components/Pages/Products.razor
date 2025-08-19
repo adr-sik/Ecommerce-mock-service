@@ -8,7 +8,9 @@
 @inject NavigationManager NavigationManager
 @inject IServiceProvider ServiceProvider
 
-<h3>@Category.ToUpperInvariant()</h3>
+<PageTitle>@CategoryDisplay</PageTitle>
+
+<h3>@CategoryDisplay</h3>
 
 @if (products == null)
 {
@@ -16,25 +18,43 @@
 }
 else
 {
-    <p>@products.Count</p>
     <ProductGrid products="@products" Category="@Category" />
 }
 
 @code {
     [Parameter]
-    public string Category { get; set; }
-
+    public string Category { get; set; } = null!;
     private List<ProductDTO> products = null;
+    private string CategoryDisplay { get; set; } = "Loading...";
 
     protected override async Task OnParametersSetAsync()
     {
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        var query = uri.Query;
+        try
+        {            
+            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+            var query = uri.Query;
 
-        Type dtoType = ProductCategoryMap.GetDtoType(Category);
-        var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
-        IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
+            // Get DTO based on a map -> redirect if no match found
+            Type dtoType = ProductCategoryMap.GetDtoType(Category);
+            if (dtoType == null) NavigationManager.NavigateTo("/notfound", forceLoad: true);
 
-        products = await service.GetAllProductsAsync(query);
+            var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
+            IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
+
+            products = await service.GetAllProductsAsync(query);
+
+            CategoryDisplay = Category.ToLowerInvariant();
+            CategoryDisplay = string.Concat(CategoryDisplay[0].ToString().ToUpper(), CategoryDisplay.AsSpan(1));
+        }
+        catch (InvalidOperationException)
+        {
+            Console.WriteLine($"Category '{Category}' not found or invalid.");
+            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"An unexpected error occurred: {e.Message}");
+            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        }
     }
 }

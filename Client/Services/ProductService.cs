@@ -10,18 +10,19 @@ namespace Client.Services
         protected override string Endpoint => $"api/products/{typeof(T).Name.ToLowerInvariant().Replace("dto", "").Pluralize()}";
         public ProductService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
 
+        // Utilize methods from base class
         public async Task<List<ProductDTO>> GetAllProductsAsync(string? query = "")
         {
-            try
-            {
-                var items = await this.GetAllAsync(query);
-                return items.Cast<ProductDTO>().ToList();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error fetching items from {Endpoint}: {ex.Message}");
-                return new List<ProductDTO>();
-            }
+            var items = await this.GetAllAsync(query);
+            return items.Cast<ProductDTO>().ToList();
+        }
+
+        public async Task<ProductDTO?> GetProductByIdAsync(int id)
+        {
+
+            var product = await this.GetByIdAsync(id);
+            return product;
+
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Client.Services
             _jsonOptions = jsonOptions;
         }
 
-        public virtual async Task<List<T>> GetAllAsync(string? query = "")
+        protected async Task<List<T>> GetAllAsync(string? query = "")
         {
             try
             {
@@ -34,7 +34,7 @@ namespace Client.Services
             }
         }
 
-        public virtual async Task<T?> GetByIdAsync(int id)
+        protected async Task<T?> GetByIdAsync(int id)
         {
             try
             {

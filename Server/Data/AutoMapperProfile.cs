@@ -14,7 +14,7 @@ namespace Server.Data
         public AutoMapperProfile()
         {
             // ProductTypes
-            CreateMap<Product, ProductDTO>();//.IncludeAllDerived();
+            CreateMap<Product, ProductDTO>();
             CreateMap<Laptop, LaptopDTO>();
             CreateMap<Phone, PhoneDTO>();
             CreateMap<Headphones, HeadphonesDTO>()
