@@ -59,15 +59,28 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Type dtoType = ProductCategoryMap.GetDtoType(Category);
-        if (dtoType == null) NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        try
+        {       
+            Type dtoType = ProductCategoryMap.GetDtoType(Category);
+            if (dtoType == null) NavigationManager.NavigateTo("/notfound", forceLoad: true);
 
-        var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
-        IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
+            var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
+            IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
 
-        Console.WriteLine($"Using service type: {serviceType.Name} for category: {Category}");
+            Console.WriteLine($"Using service type: {serviceType.Name} for category: {Category}");
 
-        product = await service.GetProductByIdAsync(ProductId);
+            product = await service.GetProductByIdAsync(ProductId);
+        }
+        catch (InvalidOperationException)
+        {
+            Console.WriteLine($"Category '{Category}' not found or invalid.");
+            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"An unexpected error occurred: {e.Message}");
+            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        }
     }
 
 	// Get product properties excluding base product ones

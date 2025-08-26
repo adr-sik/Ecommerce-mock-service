@@ -11,6 +11,7 @@
 <PageTitle>@CategoryDisplay</PageTitle>
 
 <h3>@CategoryDisplay</h3>
+<p>@laptopFilter.ToString()</p>
 
 @if (products == null)
 {
@@ -18,6 +19,8 @@
 }
 else
 {
+    <p>@filterQuery</p>
+    <ProductFilter FilterQueryChanged="FilterSet" />
     <ProductGrid products="@products" Category="@Category" />
 }
 
@@ -27,12 +30,19 @@ else
     private List<ProductDTO> products = null;
     private string CategoryDisplay { get; set; } = "Loading...";
 
+    public string filterQuery { get; set; } = "";
+
     protected override async Task OnParametersSetAsync()
     {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
         try
-        {            
+        {
             var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-            var query = uri.Query;
+            var query = $"{uri.Query}{filterQuery}";
 
             // Get DTO based on a map -> redirect if no match found
             Type dtoType = ProductCategoryMap.GetDtoType(Category);
@@ -57,4 +67,23 @@ else
             NavigationManager.NavigateTo("/notfound", forceLoad: true);
         }
     }
+
+    private async Task FilterSet(string filterReturn)
+    {
+        filterQuery = filterReturn;
+        Redirect();
+    }
+
+    private void Redirect()
+    {
+        var uri = NavigationManager.Uri;
+        NavigationManager.NavigateTo($"{uri}{filterQuery}");
+    }
+
+    private LaptopFilter laptopFilter = new LaptopFilter
+    {
+        CpuBrand = Shared.Models.Enums.CpuBrand.Intel,
+        MaxPrice = 1500,
+        RamCapacity = 8
+    };
 }

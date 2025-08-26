@@ -15,4 +15,8 @@
     <ProjectReference Include="..\..\Ecommerce-mock-service\Shared\Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Layout\Filter Components\" />
+  </ItemGroup>
+
 </Project>

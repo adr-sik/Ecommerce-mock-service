@@ -46,7 +46,7 @@ namespace Server.Controllers
 
         // GET: api/products/laptops
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<LaptopDTO>>> GetProducts(int pageNumber = 1, int pageSize = 20, [FromQuery] LaptopFilter? filter = null)
+        public async Task<ActionResult<IEnumerable<LaptopDTO>>> GetLaptops(int pageNumber = 1, int pageSize = 20, [FromQuery] LaptopFilter? filter = null)
         {
             IQueryable<Laptop> query = _context.Laptops;
 

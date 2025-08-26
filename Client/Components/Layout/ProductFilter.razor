@@ -1,41 +1,46 @@
-﻿@using Shared.Models.DTOs
-@typeparam T where T : ProductDTO
-@inject Services.ProductService<T> ProductService
-@inject NavigationManager NavManager
+﻿@inject NavigationManager NavManager
 
-<!-- Filter for all products -->
 <MudPaper Elevation="25">
 	<MudToolBar>
-		<MudNumericField @bind-Value="minPrice" Label="Min. price" Format="F2" Variant="Variant.Outlined" />
-		<MudNumericField @bind-Value="maxPrice" Label="Max. price" Format="F2" Variant="Variant.Outlined" />
-	</MudToolBar>
-
-	<!-- Filter specific to category -->
-	<MudToolBar>
-		<p>This filter is for @Category</p>
+		<MudNumericField @bind-Value="CurrentMaxPrice" Label="Max Price" Clearable="true" />
+		<p>@query</p>
 	</MudToolBar>
 </MudPaper>
 
 @code {
-	[Parameter]
-	public string Category { get; set; } = "";
+	public string query { get; set; }
+	[Parameter] 
+	public EventCallback<string> FilterQueryChanged { get; set; }
 
-	private decimal minPrice { get; set; }
-	private decimal maxPrice { get; set; }
+	private decimal? _currentMaxPrice;
 
-	private void ChooseFilter(string url)
+	private decimal? CurrentMaxPrice
 	{
-		switch(url)
+		get => _currentMaxPrice;
+		set
 		{
-			case "phones":
-				NavManager.NavigateTo("/products/electronics/phones");
-				break;
-			case "laptops":
-				NavManager.NavigateTo("/products/electronics/laptops");
-				break;
-			case "headphones":
-				NavManager.NavigateTo("/products/electronics/headphones");
-				break;
-		}		
+			if (_currentMaxPrice != value)
+			{
+				_currentMaxPrice = value; // Update the backing field
+
+				// Update the query string based on the new value
+				query = _currentMaxPrice.HasValue ? $"?maxprice={_currentMaxPrice.Value}" : "";
+
+				// Invoke the EventCallback to notify the parent component asynchronously
+				// We don't await an async void, so we just fire and forget here.
+				// If you need to ensure parent completes before continuing, make this method async Task
+				// and await the InvokeAsync.
+				_ = FilterQueryChanged.InvokeAsync(query); // Use _ = to suppress compiler warning for unawaited Task
+			}
+		}
+	}
+
+	private async void HandleMaxPriceChanged(decimal? newValue)
+	{
+		CurrentMaxPrice = newValue;
+
+		query = CurrentMaxPrice.HasValue ? $"?maxprice={CurrentMaxPrice.Value}" : "";
+
+		await FilterQueryChanged.InvokeAsync(query);
 	}
 }

@@ -9,9 +9,9 @@ namespace Shared.Models.DTOs.ProductTypesDTOs
 {
     public class PhoneDTO : ProductDTO
     {
-        public string? Color { get; set; }
-        public DisplayDTO? Display { get; set; }
+        public string? Color { get; set; }       
         public CameraDTO? Camera { get; set; }
         public CpuDTO? Cpu { get; set; }
+        public DisplayDTO? Display { get; set; }
     }
 }
