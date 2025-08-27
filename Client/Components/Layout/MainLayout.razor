@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
-@inject NavigationManager NavManager
+@inject NavigationManager NavigationManager
+@inject Client.Services.FilterStateService FilterStateService
 
 @* Required *@
 <MudThemeProvider />
@@ -37,13 +38,31 @@
 
             @if (_drawerOpen)
             {
-                <div class="pa-4 mt-8">
-                    <MudPaper Elevation="0" Class="pa-4 mud-theme-warning-text mud-theme-warning lighten-5">
-                        <MudText Typo="Typo.h6">Sale!</MudText>
-                        <MudText Typo="Typo.body2">Get 20% off all laptops this week.</MudText>
-                        <MudButton Variant="Variant.Filled" Color="Color.Warning" Href="/products/laptops" Class="mt-2">Shop Now</MudButton>
-                    </MudPaper>
-                </div>
+                @if (FilterStateService.Show == true)
+                {
+                    <!-- Filter Menu -->
+                    try
+                    {
+                        <p>Menu for: @FilterStateService.SelectedCategory</p>
+                        <FilterMenu @key="FilterStateService.SelectedCategory"/>
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"An unexpected error occurred: {e.Message}");
+                        NavigationManager.NavigateTo("/notfound", forceLoad: true);
+                    }
+                }
+                else
+                {
+                    <!-- Side Ads -->
+                    <div class="pa-4 mt-8">
+                        <MudPaper Elevation="0" Class="pa-4 mud-theme-warning-text mud-theme-warning lighten-5">
+                            <MudText Typo="Typo.h6">Sale!</MudText>
+                            <MudText Typo="Typo.body2">Get 20% off all laptops this week.</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Warning" Href="/products/laptops" Class="mt-2">Shop Now</MudButton>
+                        </MudPaper>
+                    </div>
+                }
             }
         </MudNavMenu>
     </MudDrawer>
@@ -64,11 +83,6 @@
                 </div>
             </MudPaper>
         }
-        <!-- Filter Menu -->
-        @if (IsProductPage)
-        {
-            
-        }
         <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
             @Body
         </MudContainer>
@@ -76,12 +90,38 @@
 </MudLayout>
 
 @code {
-    private bool IsHomePage => NavManager.Uri == NavManager.BaseUri;
-    private bool IsProductPage = false;
+    private bool IsHomePage => NavigationManager.Uri == NavigationManager.BaseUri;
     private string drawerHeaderIcon = @Icons.Material.Outlined.ArrowCircleLeft;
     private string sidemenuHeader = "";
-
     private bool _drawerOpen = false;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        FilterStateService.OnChange += OnFilterStateChanged;
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        bool isProductPage = e.Location.Contains("/products");
+        if (!isProductPage)
+        {
+            FilterStateService.SetCategory("");
+        }
+    }
+
+    private async void OnFilterStateChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        FilterStateService.OnChange -= OnFilterStateChanged;
+    }
 
     private void ToggleDrawer()
     {

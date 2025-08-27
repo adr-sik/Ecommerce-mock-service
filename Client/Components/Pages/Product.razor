@@ -7,6 +7,7 @@
 @using System.Reflection
 @inject NavigationManager NavigationManager
 @inject IServiceProvider ServiceProvider
+@inject FilterStateService FilterStateService
 
 <PageTitle>Not Found</PageTitle>
 
@@ -54,11 +55,11 @@ else
     public int ProductId { get; set; }
     [Parameter]
     public string ProductSlug { get; set; }
-
     private ProductDTO product;
 
     protected override async Task OnInitializedAsync()
     {
+        FilterStateService.SetCategory("");
         try
         {       
             Type dtoType = ProductCategoryMap.GetDtoType(Category);

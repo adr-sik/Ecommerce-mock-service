@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using Shared.Util;
+using Microsoft.Extensions.Primitives;
+using System.Windows.Markup;
 
 namespace Shared.Models.Filters
 {
@@ -25,6 +27,23 @@ namespace Shared.Models.Filters
         public override string ToString()
         {
             return ToStringCustomConverter.ConvertFilterToQuery(this);
+        }
+
+        public void PopulateFromQuery(Dictionary<string, StringValues> values)
+        {
+
+            if (values.ContainsKey("CpuBrand"))
+            {
+                CpuBrand cpuBrand;
+                if (Enum.TryParse(values["CpuBrand"], true, out cpuBrand))
+                {                 
+                    this.CpuBrand = cpuBrand;
+                }
+                else 
+                {
+                    this.CpuBrand = null;
+                }
+            }            
         }
     }
 }

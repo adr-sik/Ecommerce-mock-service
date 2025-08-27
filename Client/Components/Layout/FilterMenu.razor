@@ -1,0 +1,42 @@
+﻿@inject NavigationManager NavigationManager
+@using Client.Components.Util
+@using Shared.Models.Filters
+@using System.Reflection
+@inject Client.Services.FilterStateService FilterStateService
+
+<MudPaper>
+	<MudToolBar>
+
+		<p>@test</p>
+        @if (test == "laptops")
+        {
+            <Client.Components.Layout.Filter_Components.LaptopFilterMenu />
+        }
+
+	</MudToolBar>
+</MudPaper>
+
+@code {
+    private string test = "";
+    private ProductFilter Filter { get; set;}
+    private string category = "";
+
+    protected override void OnInitialized()
+    {
+        FilterStateService.OnChange += OnFilterStateChanged;
+        test = FilterStateService.SelectedCategory;
+    }
+
+    private async void OnFilterStateChanged()
+    {
+        await InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
+    }
+
+    public void Dispose()
+    {
+        FilterStateService.OnChange -= OnFilterStateChanged;
+    }
+}

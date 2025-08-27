@@ -7,6 +7,8 @@
 @using Shared.Models.Filters
 @inject NavigationManager NavigationManager
 @inject IServiceProvider ServiceProvider
+@inject FilterStateService FilterStateService
+@inject PersistentComponentState state
 
 <PageTitle>@CategoryDisplay</PageTitle>
 
@@ -20,24 +22,35 @@
 else
 {
     <p>@filterQuery</p>
-    <ProductFilter FilterQueryChanged="FilterSet" />
     <ProductGrid products="@products" Category="@Category" />
 }
 
 @code {
     [Parameter]
     public string Category { get; set; } = null!;
-    private List<ProductDTO> products = null;
+    private List<ProductDTO> products = new();
     private string CategoryDisplay { get; set; } = "Loading...";
-
     public string filterQuery { get; set; } = "";
+    private PersistingComponentStateSubscription persistingSubscription;
 
     protected override async Task OnParametersSetAsync()
     {
-        await LoadProducts();
+        persistingSubscription = state.RegisterOnPersisting(PersistData);
+        if (!state.TryTakeFromJson<List<ProductDTO>>(Category, out var restored))
+        {
+            if (FilterStateService.SelectedCategory != Category)
+            {
+                FilterStateService.SetCategory(Category);
+            }
+            await LoadProductsAsync();
+        }
+        else
+        {
+            products = restored ?? new();
+        }
     }
 
-    private async Task LoadProducts()
+    private async Task LoadProductsAsync()
     {
         try
         {
@@ -68,16 +81,10 @@ else
         }
     }
 
-    private async Task FilterSet(string filterReturn)
+    private Task PersistData()
     {
-        filterQuery = filterReturn;
-        Redirect();
-    }
-
-    private void Redirect()
-    {
-        var uri = NavigationManager.Uri;
-        NavigationManager.NavigateTo($"{uri}{filterQuery}");
+        state.PersistAsJson(Category, products);
+        return Task.CompletedTask;
     }
 
     private LaptopFilter laptopFilter = new LaptopFilter

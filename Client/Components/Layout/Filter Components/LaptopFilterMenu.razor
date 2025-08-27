@@ -1,0 +1,36 @@
+﻿@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives;
+@using Shared.Models.Filters
+
+<p>THIS IS A LAPTOP FILTER</p>
+<p>CPU: @filter.CpuBrand.ToString()</p>
+
+@code {
+	private LaptopFilter filter = new LaptopFilter();
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += HandleLocationChanged;
+        PopulateFilterFromUrl();
+    }
+
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        PopulateFilterFromUrl();
+        StateHasChanged();
+    }
+
+    private void PopulateFilterFromUrl()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        Dictionary<string, StringValues> paramDictionary = QueryHelpers.ParseQuery(uri.Query);
+
+        filter.PopulateFromQuery(paramDictionary);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= HandleLocationChanged;
+    }
+}	

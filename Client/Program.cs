@@ -37,6 +37,8 @@ namespace Client
             AddApiService<ProductService<PhoneDTO>>(builder, apiUrl);
             AddApiService<ProductService<HeadphonesDTO>>(builder, apiUrl);
 
+            builder.Services.AddSingleton<FilterStateService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -55,7 +57,7 @@ namespace Client
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
 
-            app.UseStatusCodePagesWithRedirects("/notfound");
+            app.UseStatusCodePagesWithRedirects("/StatusCode/{0}");
 
             app.Run();
         }
