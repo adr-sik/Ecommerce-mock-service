@@ -13,16 +13,16 @@ namespace Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
             builder.Services.AddDbContext<EcommerceContext>(options =>
-                options.UseSqlServer("Data Source=.\\SQLEXPRESS;Initial Catalog=ecom;Integrated Security=True;TrustServerCertificate=True"), ServiceLifetime.Scoped);
+                options.UseSqlServer(connectionString));
 
             builder.Services.AddControllers()
                     .AddJsonOptions(options =>
                     {
-                        // This is the important part
                         options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
 
-                        // This is also a good idea for consistency with the client
                         //options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                     });
 
@@ -64,7 +64,7 @@ namespace Server
 
             app.UseHttpsRedirection();
 
-            app.UseCors();  // <-- Use CORS middleware here
+            app.UseCors();
 
             app.UseAuthorization();
 
