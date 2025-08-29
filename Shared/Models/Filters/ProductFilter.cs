@@ -71,28 +71,26 @@ namespace Shared.Models.Filters
 
         private void SetPropertyValue(PropertyInfo property, string value)
         {
-            // Handle nullable types
             var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
-            // Handle Lists
             if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
             {
                 var itemType = propertyType.GetGenericArguments()[0];
-                // Create a list and populate it
+
                 var list = (IList)Activator.CreateInstance(propertyType);
-                foreach (var item in value.Split(',')) // Assumes comma-separated list in query
+                foreach (var item in value.Split(','))
                 {
                     list.Add(Convert.ChangeType(item, itemType));
                 }
                 property.SetValue(this, list);
             }
-            // Handle Enums
+
             else if (propertyType.IsEnum)
             {
                 var enumValue = Enum.Parse(propertyType, value, true);
                 property.SetValue(this, enumValue);
             }
-            // Handle primitive types
+
             else
             {
                 var convertedValue = Convert.ChangeType(value, propertyType);
