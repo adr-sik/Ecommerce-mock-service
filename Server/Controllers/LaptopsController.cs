@@ -94,3 +94,10 @@ namespace Server.Controllers
         }
     }
 }
+
+/*
+TODO
+1. optimize queries -> no need to include all dependecies
+2. apply strategy pattern to avoid having duplicate controllers
+*/
+

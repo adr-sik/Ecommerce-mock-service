@@ -9,14 +9,21 @@
 @inject IServiceProvider ServiceProvider
 @inject FilterStateService FilterStateService
 
-<PageTitle>Not Found</PageTitle>
+<PageTitle>@ProductSlug</PageTitle>
 
 @if (product != null)
 {
-    <PageTitle>@product.Brand @product.Model</PageTitle>
+    <HeadContent>
+        <meta name="description" content="@product.Brand @product.Model - @product.Description" />
+        <meta name="keywords" content="@product.Brand, @product.Model, @Category" />
+        <meta property="og:title" content="@product.Brand @product.Model" />
+        <meta property="og:description" content="@product.Description" />
+        <meta property="og:image" content="@product.Images.First().Path" />
+        <meta property="og:url" content="@NavigationManager.Uri" />
+    </HeadContent>
 
     <h3>@product.Brand - @product.Model</h3>
-    <MudImage Src="@product.Images.First().Path"></MudImage>
+    <MudImage Src="@product.Images.First().Path" Alt="@ProductSlug"></MudImage>
     if (product.Sale != null && product.Sale > 0)
     {
         <h3 style="color:red;">@product.Price</h3>

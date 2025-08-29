@@ -13,7 +13,6 @@
 <PageTitle>@CategoryDisplay</PageTitle>
 
 <h3>@CategoryDisplay</h3>
-<p>@laptopFilter.ToString()</p>
 
 @if (products == null)
 {
@@ -31,11 +30,17 @@ else
     private List<ProductDTO> products = new();
     private string CategoryDisplay { get; set; } = "Loading...";
     public string filterQuery { get; set; } = "";
+    // prevents double loading
     private PersistingComponentStateSubscription persistingSubscription;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        persistingSubscription = state.RegisterOnPersisting(PersistData);
+    }
 
     protected override async Task OnParametersSetAsync()
     {
-        persistingSubscription = state.RegisterOnPersisting(PersistData);
         if (!state.TryTakeFromJson<List<ProductDTO>>(Category, out var restored))
         {
             if (FilterStateService.SelectedCategory != Category)
@@ -54,8 +59,7 @@ else
     {
         try
         {
-            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-            var query = $"{uri.Query}{filterQuery}";
+            var queryString = new Uri(NavigationManager.Uri).Query;
 
             // Get DTO based on a map -> redirect if no match found
             Type dtoType = ProductCategoryMap.GetDtoType(Category);
@@ -64,7 +68,9 @@ else
             var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
             IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
 
-            products = await service.GetAllProductsAsync(query);
+            products = await service.GetAllProductsAsync(queryString);
+
+            StateHasChanged();
 
             CategoryDisplay = Category.ToLowerInvariant();
             CategoryDisplay = string.Concat(CategoryDisplay[0].ToString().ToUpper(), CategoryDisplay.AsSpan(1));
@@ -81,16 +87,21 @@ else
         }
     }
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Force the component to re-render and reload data
+        InvokeAsync(LoadProductsAsync);
+    }
+
     private Task PersistData()
     {
         state.PersistAsJson(Category, products);
         return Task.CompletedTask;
     }
 
-    private LaptopFilter laptopFilter = new LaptopFilter
+    public void Dispose()
     {
-        CpuBrand = Shared.Models.Enums.CpuBrand.Intel,
-        MaxPrice = 1500,
-        RamCapacity = 8
-    };
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        persistingSubscription.Dispose();
+    }
 }

@@ -1,36 +1,22 @@
 ﻿@inject NavigationManager NavigationManager
+@using Client.Helpers
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Primitives;
 @using Shared.Models.Filters
+@using Shared.Models.Enums
 
-<p>THIS IS A LAPTOP FILTER</p>
-<p>CPU: @filter.CpuBrand.ToString()</p>
+@if (Filter != null)
+{
+    <MudSelect T="CpuBrand?" @bind-Value="Filter.CpuBrand" Label="Cpu Brand">
+        @foreach (CpuBrand brand in filterSpecs.GetBrands())
+        {
+            <MudSelectItem T="CpuBrand?" Value="@brand">@brand.ToString()</MudSelectItem>
+        }
+    </MudSelect>
+}
 
 @code {
-	private LaptopFilter filter = new LaptopFilter();
-
-    protected override void OnInitialized()
-    {
-        NavigationManager.LocationChanged += HandleLocationChanged;
-        PopulateFilterFromUrl();
-    }
-
-    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
-    {
-        PopulateFilterFromUrl();
-        StateHasChanged();
-    }
-
-    private void PopulateFilterFromUrl()
-    {
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        Dictionary<string, StringValues> paramDictionary = QueryHelpers.ParseQuery(uri.Query);
-
-        filter.PopulateFromQuery(paramDictionary);
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= HandleLocationChanged;
-    }
+    [CascadingParameter(Name = "ProductFilter")]
+    public LaptopFilter Filter { get; set; } = new LaptopFilter();
+    private LaptopFilterHelper filterSpecs = new LaptopFilterHelper();
 }	

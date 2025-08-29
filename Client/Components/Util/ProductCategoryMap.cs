@@ -16,7 +16,7 @@ namespace Client.Components.Util
 
         public static Type GetDtoType(string category)
         {
-            return categoryToDto.TryGetValue(category.ToLowerInvariant(), out var type) ? type : null;
+            return categoryToDto.TryGetValue(category.ToLowerInvariant(), out var type) ? type : typeof(ProductDTO);
         }
 
         private static readonly Dictionary<string, Type> categoryToFilter = new()
@@ -26,6 +26,9 @@ namespace Client.Components.Util
             //["headphones"] = typeof(HeadphonesDTO)
         };
 
-        public static Type GetFilterType(string category) => categoryToFilter.TryGetValue(category.ToLowerInvariant(), out var type) ? type : typeof(ProductFilter);
+        public static Type GetFilterType(string category)
+        {
+            return categoryToFilter.TryGetValue(category.ToLowerInvariant(), out var type) ? type : typeof(ProductFilter);
+        }
     }
 }

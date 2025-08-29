@@ -14,9 +14,9 @@ using System.Threading.Tasks;
 
 namespace Server.Controllers
 {
-    [Route("api/products")]
+    [Route("api/products/")]
     [ApiController]
-    public class ProductsController : ControllerBase
+    public abstract class ProductsController<ProductDTO, ProductFilter> : ControllerBase
     {
         private readonly EcommerceContext _context;
         private readonly IMapper _mapper;
@@ -29,7 +29,7 @@ namespace Server.Controllers
 
         [HttpGet]
         [HttpGet("{type:alpha}")]
-        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts(string type = null, int pageNumber = 1, int pageSize = 20)
+        protected async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts(string type = null, int pageNumber = 1, int pageSize = 20)
         {
             IQueryable<Product> query = _context.Products;
 
@@ -41,7 +41,7 @@ namespace Server.Controllers
 
         // GET: api/Products/5
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<ProductDTO>> GetProduct(int id)
+        protected async Task<ActionResult<ProductDTO>> GetProduct(int id)
         {
             var product = await _context.Products
                 .Include(p => p.Images)
@@ -58,7 +58,7 @@ namespace Server.Controllers
         // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        protected async Task<IActionResult> PutProduct(int id, Product product)
         {
             if (id != product.Id)
             {
@@ -89,7 +89,7 @@ namespace Server.Controllers
         // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        protected async Task<ActionResult<Product>> PostProduct(Product product)
         {
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
@@ -99,7 +99,7 @@ namespace Server.Controllers
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        protected async Task<IActionResult> DeleteProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null)
@@ -113,7 +113,7 @@ namespace Server.Controllers
             return NoContent();
         }
 
-        private bool ProductExists(int id)
+        protected bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
         }

@@ -15,7 +15,7 @@
 <MudLayout>
     <!-- Top App Bar -->
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
         <MudSpacer />
         <MudText Typo="Typo.h6">E-Commerce Demo</MudText>
         <MudSpacer />
@@ -27,7 +27,7 @@
     </MudAppBar>
 
     <!-- Side Drawer -->
-    <MudDrawer @bind-Open="@_drawerOpen" Elevation="1" Variant="@DrawerVariant.Mini" OpenMiniOnHover="true" ClipMode="DrawerClipMode.Docked">
+    <MudDrawer @bind-Open="@_drawerOpen" Elevation="1" Variant="@DrawerVariant.Responsive" Breakpoint="Breakpoint.Sm">
         <MudNavMenu>
             <MudNavLink Icon="@drawerHeaderIcon" Style="cursor: default; pointer-events: none;" Class="mb-4" IconColor="Color.Default">
                 <MudText Typo="Typo.h6" Color="Color.Dark">Categories</MudText>
@@ -67,6 +67,7 @@
         </MudNavMenu>
     </MudDrawer>
 
+
     <!-- Main Content -->
     <MudMainContent>
         <!-- Banner -->
@@ -93,7 +94,7 @@
     private bool IsHomePage => NavigationManager.Uri == NavigationManager.BaseUri;
     private string drawerHeaderIcon = @Icons.Material.Outlined.ArrowCircleLeft;
     private string sidemenuHeader = "";
-    private bool _drawerOpen = false;
+    private bool _drawerOpen = true;
 
     protected override void OnInitialized()
     {

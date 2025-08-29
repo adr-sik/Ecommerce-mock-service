@@ -4,27 +4,58 @@
 @using System.Reflection
 @inject Client.Services.FilterStateService FilterStateService
 
-<MudPaper>
-	<MudToolBar>
+<MudPaper Class="pa-4">
+    @if(_isLoaded){
+        @* common filtering logic // TODO add test besed search*@
+        <MudNumericField @bind-Value="Filter.MinPrice" Label="Min Price"></MudNumericField>
+        <MudNumericField @bind-Value="Filter.MaxPrice" Label="Max Price"></MudNumericField>
+        <MudCheckBox @bind-Value="Filter.OnSale" Label="Sale"></MudCheckBox>
 
-		<p>@test</p>
-        @if (test == "laptops")
+        @* unique filtering logic *@
+        @switch (category)
         {
-            <Client.Components.Layout.Filter_Components.LaptopFilterMenu />
+            case "laptops":
+                <CascadingValue Value="@((LaptopFilter)Filter)" Name="ProductFilter" IsFixed="true">
+                    <Client.Components.Layout.Filter_Components.LaptopFilterMenu />
+                </CascadingValue>
+                break;
+            case "headphones":
+
+                break;
+            case "phones":
+
+                break;
+
         }
 
-	</MudToolBar>
+        <MudButton OnClick="ApplyFilters" Variant="Variant.Filled" ButtonType="ButtonType.Button">Apply</MudButton>
+    }
 </MudPaper>
 
 @code {
-    private string test = "";
-    private ProductFilter Filter { get; set;}
+    public ProductFilter Filter { get; set; } = new ProductFilter();
     private string category = "";
+    private bool _isLoaded = false;
+    private Type filterType;
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
+        //TODO solve the bug with not loading the first parameter
+        if (Filter == null) return;
         FilterStateService.OnChange += OnFilterStateChanged;
-        test = FilterStateService.SelectedCategory;
+
+        category = FilterStateService.SelectedCategory;
+        filterType = ProductCategoryMap.GetFilterType(category);
+
+        Filter = (ProductFilter)Activator.CreateInstance(filterType);
+        Filter.PopulateFromUri(NavigationManager.Uri);
+
+        _isLoaded = true;
+    }
+
+    private void ApplyFilters()
+    {
+        NavigationManager.NavigateTo($"{NavigationManager.Uri.Split('?')[0]}?{Filter.ToString()}");
     }
 
     private async void OnFilterStateChanged()
@@ -40,3 +71,16 @@
         FilterStateService.OnChange -= OnFilterStateChanged;
     }
 }
+
+@*
+TODO
+    1. create a component encompassing common filter logic
+    2. have an interface for polymorphism
+    3. call that interface from common filter component and change behavior based on url
+    4. add filter menu component for unique logic 
+    5. bind value fields to a filter object
+    6. call api either on:
+        6a. submitting filters
+        6b. changing values 
+    7. make sure the filtering state is sharable and ui reflects it
+*@

@@ -1,12 +1,12 @@
-﻿using Shared.Models.Enums;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
+using Shared.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using System.Reflection;
-using Shared.Util;
-using Microsoft.Extensions.Primitives;
 using System.Windows.Markup;
 
 namespace Shared.Models.Filters
@@ -23,27 +23,5 @@ namespace Shared.Models.Filters
         public string? GpuModel { get; set; }
         public int? GpuVRAM { get; set; }
         public int? RamCapacity { get; set; }
-
-        public override string ToString()
-        {
-            return ToStringCustomConverter.ConvertFilterToQuery(this);
-        }
-
-        public void PopulateFromQuery(Dictionary<string, StringValues> values)
-        {
-
-            if (values.ContainsKey("CpuBrand"))
-            {
-                CpuBrand cpuBrand;
-                if (Enum.TryParse(values["CpuBrand"], true, out cpuBrand))
-                {                 
-                    this.CpuBrand = cpuBrand;
-                }
-                else 
-                {
-                    this.CpuBrand = null;
-                }
-            }            
-        }
     }
 }
