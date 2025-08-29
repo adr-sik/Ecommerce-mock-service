@@ -1,0 +1,156 @@
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject Client.Services.FilterStateService FilterStateService
+
+@* Required *@
+<MudThemeProvider />
+<MudPopoverProvider />
+
+@* Needed for dialogs *@
+<MudDialogProvider />
+
+@* Needed for snackbars *@
+<MudSnackbarProvider />
+
+<MudLayout>
+    <!-- Top App Bar -->
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+        <MudSpacer />
+        <MudText Typo="Typo.h6">E-Commerce Demo</MudText>
+        <MudSpacer />
+        <MudMenu Icon="@Icons.Material.Filled.Home" Color="Color.Inherit">
+            <MudMenuItem Href="/">Home</MudMenuItem>
+            <MudMenuItem Href="/weather">Cart</MudMenuItem>
+            <MudMenuItem Href="/products">Log In</MudMenuItem>
+        </MudMenu>
+    </MudAppBar>
+
+    <!-- Side Drawer -->
+    <MudDrawer @bind-Open="@_drawerOpen" Elevation="1" Variant="@DrawerVariant.Responsive" Breakpoint="Breakpoint.Sm">
+        <MudNavMenu>
+            <MudNavLink Icon="@drawerHeaderIcon" Style="cursor: default; pointer-events: none;" Class="mb-4" IconColor="Color.Default">
+                <MudText Typo="Typo.h6" Color="Color.Dark">Categories</MudText>
+            </MudNavLink>
+            <MudNavLink Href="/products/phones" Icon="@Icons.Material.Filled.Smartphone">Phones</MudNavLink>
+            <MudNavLink Href="/products/laptops" Icon="@Icons.Material.Filled.Laptop">Laptops</MudNavLink>
+            <MudNavLink Href="/products/headphones" Icon="@Icons.Material.Filled.Headphones">Headphones</MudNavLink>
+
+            @if (_drawerOpen)
+            {
+                @if (FilterStateService.Show == true)
+                {
+                    <!-- Filter Menu -->
+                    try
+                    {
+                        <p>Menu for: @FilterStateService.SelectedCategory</p>
+                        <FilterMenu @key="FilterStateService.SelectedCategory"/>
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"An unexpected error occurred: {e.Message}");
+                        NavigationManager.NavigateTo("/notfound", forceLoad: true);
+                    }
+                }
+                else
+                {
+                    <!-- Side Ads -->
+                    <div class="pa-4 mt-8">
+                        <MudPaper Elevation="0" Class="pa-4 mud-theme-warning-text mud-theme-warning lighten-5">
+                            <MudText Typo="Typo.h6">Sale!</MudText>
+                            <MudText Typo="Typo.body2">Get 20% off all laptops this week.</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Warning" Href="/products/laptops" Class="mt-2">Shop Now</MudButton>
+                        </MudPaper>
+                    </div>
+                }
+            }
+        </MudNavMenu>
+    </MudDrawer>
+
+
+    <!-- Main Content -->
+    <MudMainContent>
+        <!-- Banner -->
+        @if (IsHomePage)
+        {
+            <MudPaper Class="hero-banner" Elevation="0" Square="true">
+                <div class="overlay">
+                    <MudContainer MaxWidth="MaxWidth.Large" Class="text-center py-10">
+                        <MudText Typo="Typo.h3" Color="Color.Primary" Class="mb-2">Welcome to Our Store</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="mb-4" Color="Color.Primary">
+                            Find the best deals on electronics and other gadgets.
+                        </MudText>
+                    </MudContainer>
+                </div>
+            </MudPaper>
+        }
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool IsHomePage => NavigationManager.Uri == NavigationManager.BaseUri;
+    private string drawerHeaderIcon = @Icons.Material.Outlined.ArrowCircleLeft;
+    private string sidemenuHeader = "";
+    private bool _drawerOpen = true;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        FilterStateService.OnChange += OnFilterStateChanged;
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        bool isProductPage = e.Location.Contains("/products");
+        if (!isProductPage)
+        {
+            FilterStateService.SetCategory("");
+        }
+    }
+
+    private async void OnFilterStateChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        FilterStateService.OnChange -= OnFilterStateChanged;
+    }
+
+    private void ToggleDrawer()
+    {
+        if (_drawerOpen)
+        {
+            drawerHeaderIcon = @Icons.Material.Outlined.ArrowCircleLeft;
+        }
+        else
+        {
+            drawerHeaderIcon = @Icons.Material.Filled.ArrowCircleRight;
+        }
+        _drawerOpen = !_drawerOpen;
+    }
+}
+
+<style>
+    .hero-banner {
+        background-image: url('images/banner.jpg');
+        background-size: cover;
+        background-position: center;
+        height: 300px;
+    }
+
+        .hero-banner .overlay {
+            background-color: rgba(255, 255, 255, 0.5); /* light overlay */
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+</style>
+

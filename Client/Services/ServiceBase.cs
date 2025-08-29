@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using Shared.Models.DTOs;
 
 namespace Client.Services
 {
@@ -7,18 +9,22 @@ namespace Client.Services
     public abstract class ServiceBase<T>
     {
         protected readonly HttpClient _http;
+        protected readonly JsonSerializerOptions _jsonOptions;
+
         protected abstract string Endpoint { get; }
 
-        protected ServiceBase(HttpClient http)
+        protected ServiceBase(HttpClient http, JsonSerializerOptions jsonOptions)
         {
             _http = http;
+            _jsonOptions = jsonOptions;
         }
 
-        public async Task<List<T>> GetAllAsync()
+        protected async Task<List<T>> GetAllAsync(string? query = "")
         {
             try
             {
-                var items = await _http.GetFromJsonAsync<List<T>>(Endpoint);
+                var items = await _http.GetFromJsonAsync<List<T>>($"{Endpoint}{query}", _jsonOptions);
+                Console.WriteLine($"Fetched {items?.Count ?? 0} items from {Endpoint}");
                 return items ?? new List<T>();
             }
             catch (Exception ex)
@@ -28,14 +34,14 @@ namespace Client.Services
             }
         }
 
-        public async Task<T?> GetByIdAsync(int id)
+        protected async Task<T?> GetByIdAsync(int id)
         {
             try
             {
                 var response = await _http.GetAsync($"{Endpoint}/{id}");
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<T>();
+                    return await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
                 }
                 return default;
             }
@@ -46,7 +52,7 @@ namespace Client.Services
             }
         }
 
-        public async Task<T?> PutAsync(int id, T item)
+        protected async Task<T?> PutAsync(int id, T item)
         {
             try
             {
@@ -64,7 +70,7 @@ namespace Client.Services
             }
         }
 
-        public async Task<T?> PostAsync(T item)
+        protected async Task<T?> PostAsync(T item)
         {
             try
             {
@@ -82,7 +88,7 @@ namespace Client.Services
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        protected async Task<bool> DeleteAsync(int id)
         {
             try
             {

@@ -1,0 +1,53 @@
+﻿@using Shared.Models.DTOs
+@inject NavigationManager NavigationManager
+
+@if (products == null)
+{
+    <p><em>Loading... @Category</em></p>
+}
+else
+{
+    <MudGrid>
+        @foreach (var product in products)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="4" Class="rounded-lg h-full flex flex-col cursor-pointer" onclick="@(() => NavigateToItem(product))">
+                    <MudCardHeader>
+                        <p>@product.Model</p>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex justify-center">
+                            <MudImage Src="@product.Images.First().Path" Alt="@product.Model" Elevation="25" Class="rounded-lg" Height="200" Width="200" ObjectFit="ObjectFit.Contain" />
+                        </div>
+                        <div>
+                            @if (@product.Sale.HasValue)
+                            {
+                                <MudText Typo="Typo.subtitle1" Class="mt-2" Style="@($"color:{Colors.Red.Default}; text-decoration: line-through;")" Inline="true">€@product.Price</MudText>
+                                <MudText Typo="Typo.subtitle1" Class="mt-2" Inline="true"> -@product.Sale.Value% </MudText>
+                                <MudText Typo="Typo.subtitle1" Class="mt-2" Inline="true">€@product.GetPriceWithSale()</MudText>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.subtitle1" Class="mt-2">€@product.Price</MudText>
+                            }
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code{
+    [Parameter]
+    public List<ProductDTO> products { get; set; } = null;
+    [Parameter]
+    public string Category { get; set; } = null!;
+
+	private void NavigateToItem(ProductDTO product)
+	{
+		var productName = (product.Brand + "-" + product.Model).Replace(" ", "-").ToLowerInvariant();
+		var encodedProductName = Uri.EscapeDataString(productName);
+        NavigationManager.NavigateTo($"products/{Category}/{product.Id}/{encodedProductName}");
+	}
+}

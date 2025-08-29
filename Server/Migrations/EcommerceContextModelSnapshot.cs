@@ -22,7 +22,7 @@ namespace Server.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Shared.Models.Image", b =>
+            modelBuilder.Entity("Server.Models.Image", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -41,10 +41,10 @@ namespace Server.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Image");
+                    b.ToTable("Images");
                 });
 
-            modelBuilder.Entity("Shared.Models.Order", b =>
+            modelBuilder.Entity("Server.Models.Order", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -71,7 +71,7 @@ namespace Server.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("Shared.Models.OrderProduct", b =>
+            modelBuilder.Entity("Server.Models.OrderProduct", b =>
                 {
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
@@ -89,7 +89,7 @@ namespace Server.Migrations
                     b.ToTable("OrderProducts");
                 });
 
-            modelBuilder.Entity("Shared.Models.Product", b =>
+            modelBuilder.Entity("Server.Models.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -97,15 +97,27 @@ namespace Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
+
+                    b.Property<string>("Model")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("Sale")
+                        .HasColumnType("int");
 
                     b.Property<int>("Stock")
                         .HasColumnType("int");
@@ -113,9 +125,143 @@ namespace Server.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Products");
+
+                    b.HasDiscriminator().HasValue("Product");
+
+                    b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("Shared.Models.User", b =>
+            modelBuilder.Entity("Server.Models.ProductComponents.Camera", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Megapixels")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Cameras");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductComponents.ChargingAccessory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BatteryCapacity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsFastCharging")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Port")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChargingAccessory");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductComponents.Cpu", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumberOfCores")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Cpus");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductComponents.Display", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("RefreshRateHz")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Resolution")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("ScreenSizeInches")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Displays");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductComponents.Gpu", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VRAM")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Gpus");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductComponents.Ram", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Rams");
+                });
+
+            modelBuilder.Entity("Server.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -149,9 +295,77 @@ namespace Server.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Shared.Models.Image", b =>
+            modelBuilder.Entity("Server.Models.ProductTypes.Computer", b =>
                 {
-                    b.HasOne("Shared.Models.Product", "Product")
+                    b.HasBaseType("Server.Models.Product");
+
+                    b.Property<int?>("CpuId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DisplayId")
+                        .HasColumnType("int");
+
+                    b.HasIndex("CpuId");
+
+                    b.HasIndex("DisplayId");
+
+                    b.HasDiscriminator().HasValue("Computer");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductTypes.Headphones", b =>
+                {
+                    b.HasBaseType("Server.Models.Product");
+
+                    b.Property<int?>("BatteryLife")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ChargingAccessoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HeadphoneType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("ChargingAccessoryId");
+
+                    b.HasDiscriminator().HasValue("Headphones");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductTypes.Laptop", b =>
+                {
+                    b.HasBaseType("Server.Models.ProductTypes.Computer");
+
+                    b.Property<int?>("GpuId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RamId")
+                        .HasColumnType("int");
+
+                    b.HasIndex("GpuId");
+
+                    b.HasIndex("RamId");
+
+                    b.HasDiscriminator().HasValue("Laptop");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductTypes.Phone", b =>
+                {
+                    b.HasBaseType("Server.Models.ProductTypes.Computer");
+
+                    b.Property<int?>("CameraId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("CameraId");
+
+                    b.HasDiscriminator().HasValue("Phone");
+                });
+
+            modelBuilder.Entity("Server.Models.Image", b =>
+                {
+                    b.HasOne("Server.Models.Product", "Product")
                         .WithMany("Images")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -160,9 +374,9 @@ namespace Server.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("Shared.Models.Order", b =>
+            modelBuilder.Entity("Server.Models.Order", b =>
                 {
-                    b.HasOne("Shared.Models.User", "User")
+                    b.HasOne("Server.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -171,43 +385,93 @@ namespace Server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Shared.Models.OrderProduct", b =>
+            modelBuilder.Entity("Server.Models.OrderProduct", b =>
                 {
-                    b.HasOne("Shared.Models.Order", null)
+                    b.HasOne("Server.Models.Order", null)
                         .WithMany("OrderProducts")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Shared.Models.Product", null)
+                    b.HasOne("Server.Models.Product", null)
                         .WithMany("OrderProducts")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Shared.Models.User", b =>
+            modelBuilder.Entity("Server.Models.User", b =>
                 {
-                    b.HasOne("Shared.Models.User", "Referral")
+                    b.HasOne("Server.Models.User", "Referral")
                         .WithMany("Referred")
                         .HasForeignKey("ReferralId");
 
                     b.Navigation("Referral");
                 });
 
-            modelBuilder.Entity("Shared.Models.Order", b =>
+            modelBuilder.Entity("Server.Models.ProductTypes.Computer", b =>
+                {
+                    b.HasOne("Server.Models.ProductComponents.Cpu", "Cpu")
+                        .WithMany()
+                        .HasForeignKey("CpuId");
+
+                    b.HasOne("Server.Models.ProductComponents.Display", "Display")
+                        .WithMany()
+                        .HasForeignKey("DisplayId");
+
+                    b.Navigation("Cpu");
+
+                    b.Navigation("Display");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductTypes.Headphones", b =>
+                {
+                    b.HasOne("Server.Models.ProductComponents.ChargingAccessory", "ChargingAccessory")
+                        .WithMany()
+                        .HasForeignKey("ChargingAccessoryId");
+
+                    b.Navigation("ChargingAccessory");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductTypes.Laptop", b =>
+                {
+                    b.HasOne("Server.Models.ProductComponents.Gpu", "Gpu")
+                        .WithMany()
+                        .HasForeignKey("GpuId");
+
+                    b.HasOne("Server.Models.ProductComponents.Ram", "Ram")
+                        .WithMany()
+                        .HasForeignKey("RamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gpu");
+
+                    b.Navigation("Ram");
+                });
+
+            modelBuilder.Entity("Server.Models.ProductTypes.Phone", b =>
+                {
+                    b.HasOne("Server.Models.ProductComponents.Camera", "Camera")
+                        .WithMany()
+                        .HasForeignKey("CameraId");
+
+                    b.Navigation("Camera");
+                });
+
+            modelBuilder.Entity("Server.Models.Order", b =>
                 {
                     b.Navigation("OrderProducts");
                 });
 
-            modelBuilder.Entity("Shared.Models.Product", b =>
+            modelBuilder.Entity("Server.Models.Product", b =>
                 {
                     b.Navigation("Images");
 
                     b.Navigation("OrderProducts");
                 });
 
-            modelBuilder.Entity("Shared.Models.User", b =>
+            modelBuilder.Entity("Server.Models.User", b =>
                 {
                     b.Navigation("Orders");
 

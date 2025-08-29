@@ -1,6 +1,12 @@
+using Client.Components;
 using Client.Services;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.FileProviders;
+using MudBlazor.Services;
+using Shared.Models.DTOs;
+using Shared.Models.DTOs.ProductTypesDTOs;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Client
 {
@@ -8,21 +14,56 @@ namespace Client
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("#app");
-            builder.RootComponents.Add<HeadOutlet>("head::after");
+            var builder = WebApplication.CreateBuilder(args);
 
-            var apiUrl = builder.Configuration["ApiUrl"] ?? builder.HostEnvironment.BaseAddress;
-           
-            AddApiService<OrderService>(builder, apiUrl);
-            AddApiService<ProductService>(builder, apiUrl);
-            AddApiService<UserService>(builder, apiUrl);
-            AddApiService<DesignTimeProductService>(builder, apiUrl);
+            builder.Services.AddMudServices();
 
-            await builder.Build().RunAsync();
+            // Add services to the container.
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
+
+            var jsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+            };
+            jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            jsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+            builder.Services.AddSingleton(jsonSerializerOptions);
+
+            var apiUrl = builder.Configuration["ApiUrl"];
+
+            AddApiService<ProductService<ProductDTO>>(builder, apiUrl);
+            AddApiService<ProductService<LaptopDTO>>(builder, apiUrl);
+            AddApiService<ProductService<PhoneDTO>>(builder, apiUrl);
+            AddApiService<ProductService<HeadphonesDTO>>(builder, apiUrl);
+
+            builder.Services.AddSingleton<FilterStateService>();
+
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
+            app.UseAntiforgery();
+
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode();
+
+            app.UseStatusCodePagesWithRedirects("/StatusCode/{0}");
+
+            app.Run();
         }
 
-        private static void AddApiService<TService>(WebAssemblyHostBuilder builder, string apiUrl) where TService : class
+        // Service registraction helper
+        private static void AddApiService<TService>(WebApplicationBuilder builder, string apiUrl) where TService : class
         {
             Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
             builder.Services.AddHttpClient<TService>(client =>

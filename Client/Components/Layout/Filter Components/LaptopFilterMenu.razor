@@ -1,0 +1,22 @@
+﻿@inject NavigationManager NavigationManager
+@using Client.Helpers
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives;
+@using Shared.Models.Filters
+@using Shared.Models.Enums
+
+@if (Filter != null)
+{
+    <MudSelect T="CpuBrand?" @bind-Value="Filter.CpuBrand" Label="Cpu Brand">
+        @foreach (CpuBrand brand in filterSpecs.GetBrands())
+        {
+            <MudSelectItem T="CpuBrand?" Value="@brand">@brand.ToString()</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@code {
+    [CascadingParameter(Name = "ProductFilter")]
+    public LaptopFilter Filter { get; set; } = new LaptopFilter();
+    private LaptopFilterHelper filterSpecs = new LaptopFilterHelper();
+}	

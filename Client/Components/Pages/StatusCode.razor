@@ -1,0 +1,25 @@
+﻿@page "/StatusCode/{code:int}"
+
+<p>@Message</p>
+
+@code {
+	string Message = "";
+	[Parameter]
+	public int code { get; set; }
+
+	protected override void OnInitialized()
+	{
+		switch (code)
+		{
+			case 404:
+				Message = "Page not found";
+				break;
+			case 500:
+				Message = "Internal server error";
+				break;
+			default:
+				Message = "Unknown error";
+				break;
+		}
+	}
+}

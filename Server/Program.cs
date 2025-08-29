@@ -1,6 +1,9 @@
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Server.Data;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Server
 {
@@ -13,7 +16,17 @@ namespace Server
             builder.Services.AddDbContext<EcommerceContext>(options =>
                 options.UseSqlServer("Data Source=.\\SQLEXPRESS;Initial Catalog=ecom;Integrated Security=True;TrustServerCertificate=True"), ServiceLifetime.Scoped);
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                    .AddJsonOptions(options =>
+                    {
+                        // This is the important part
+                        options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+
+                        // This is also a good idea for consistency with the client
+                        //options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    });
+
+            builder.Services.AddAutoMapper(typeof(Program));
 
             // Add CORS policy
             builder.Services.AddCors(options =>
@@ -36,6 +49,17 @@ namespace Server
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+
+                using (var scope = app.Services.CreateScope())
+                {
+                    var services = scope.ServiceProvider;
+                    var context = services.GetRequiredService<EcommerceContext>();
+
+                    context.Database.EnsureDeleted();
+                    context.Database.Migrate();
+
+                    SeedData.Initialize(context);
+                }
             }
 
             app.UseHttpsRedirection();

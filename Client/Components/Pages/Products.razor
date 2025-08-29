@@ -1,0 +1,107 @@
+@page "/products/{Category}"
+@using Client.Components.Layout
+@using Client.Components.Util
+@using Shared.Models.DTOs
+@using Shared.Models.DTOs.ProductTypesDTOs
+@using Services
+@using Shared.Models.Filters
+@inject NavigationManager NavigationManager
+@inject IServiceProvider ServiceProvider
+@inject FilterStateService FilterStateService
+@inject PersistentComponentState state
+
+<PageTitle>@CategoryDisplay</PageTitle>
+
+<h3>@CategoryDisplay</h3>
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>@filterQuery</p>
+    <ProductGrid products="@products" Category="@Category" />
+}
+
+@code {
+    [Parameter]
+    public string Category { get; set; } = null!;
+    private List<ProductDTO> products = new();
+    private string CategoryDisplay { get; set; } = "Loading...";
+    public string filterQuery { get; set; } = "";
+    // prevents double loading
+    private PersistingComponentStateSubscription persistingSubscription;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        persistingSubscription = state.RegisterOnPersisting(PersistData);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!state.TryTakeFromJson<List<ProductDTO>>(Category, out var restored))
+        {
+            if (FilterStateService.SelectedCategory != Category)
+            {
+                FilterStateService.SetCategory(Category);
+            }
+            await LoadProductsAsync();
+        }
+        else
+        {
+            products = restored ?? new();
+        }
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        try
+        {
+            var queryString = new Uri(NavigationManager.Uri).Query;
+
+            // Get DTO based on a map -> redirect if no match found
+            Type dtoType = ProductCategoryMap.GetDtoType(Category);
+            if (dtoType == null) NavigationManager.NavigateTo("/notfound", forceLoad: true);
+
+            var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
+            IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
+
+            products = await service.GetAllProductsAsync(queryString);
+
+            StateHasChanged();
+
+            CategoryDisplay = Category.ToLowerInvariant();
+            CategoryDisplay = string.Concat(CategoryDisplay[0].ToString().ToUpper(), CategoryDisplay.AsSpan(1));
+        }
+        catch (InvalidOperationException)
+        {
+            Console.WriteLine($"Category '{Category}' not found or invalid.");
+            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"An unexpected error occurred: {e.Message}");
+            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Force the component to re-render and reload data
+        InvokeAsync(LoadProductsAsync);
+    }
+
+    private Task PersistData()
+    {
+        state.PersistAsJson(Category, products);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        persistingSubscription.Dispose();
+    }
+}

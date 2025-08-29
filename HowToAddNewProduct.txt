@@ -1,0 +1,8 @@
+create the model class (server side)
+create a dto class of that model (shared lib)
+create a filter class of that dto (shared lib)
+create new controller (server side)
+
+add dto and filter classes to my mapping class (client side) 
+add new service in program.cs (client side) 
+add the dto to my automapperprofile (server side)
