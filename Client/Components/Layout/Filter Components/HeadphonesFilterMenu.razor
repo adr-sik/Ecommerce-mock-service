@@ -1,0 +1,20 @@
+﻿@using Client.Helpers
+@using Shared.Models.Filters
+@using Shared.Models.Enums
+@using Humanizer;
+
+@if (Filter != null)
+{
+    <MudSelect T="HeadphoneType?" @bind-Value="Filter.HeadphoneType" Label="Type">
+        @foreach (HeadphoneType type in filterSpecs.GetHeadphoneTypes())
+        {
+            <MudSelectItem T="HeadphoneType?" Value="@type">@type.ToString().Humanize()</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@code {
+    [CascadingParameter(Name = "ProductFilter")]
+    public HeadphonesFilter Filter { get; set; } = new HeadphonesFilter();
+    private HeadphonesFilterHelper filterSpecs = new HeadphonesFilterHelper();
+}

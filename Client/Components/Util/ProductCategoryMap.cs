@@ -21,9 +21,9 @@ namespace Client.Components.Util
 
         private static readonly Dictionary<string, Type> categoryToFilter = new()
         {
-            ["laptops"] = typeof(LaptopFilter)
-            //["phones"] = typeof(HeadphonesDTO),
-            //["headphones"] = typeof(HeadphonesDTO)
+            ["laptops"] = typeof(LaptopFilter),
+            ["phones"] = typeof(PhoneFilter),
+            ["headphones"] = typeof(HeadphonesFilter)
         };
 
         public static Type GetFilterType(string category)

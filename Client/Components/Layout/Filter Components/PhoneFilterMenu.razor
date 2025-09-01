@@ -1,0 +1,25 @@
+﻿@using Client.Helpers
+@using Shared.Models.Filters
+@using Shared.Models.Enums
+
+@if (Filter != null)
+{
+    <MudSelect T="CpuBrand?" @bind-Value="Filter.CpuBrand" Label="Cpu Brand">
+        @foreach (CpuBrand cpuBrand in filterSpecs.GetCpuBrands())
+        {
+            <MudSelectItem T="CpuBrand?" Value="@cpuBrand">@cpuBrand.ToString()</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="string" @bind-Value="Filter.Color" Label="Color">
+        @foreach(string color in filterSpecs.GetColors())
+        {
+            <MudSelectItem T="string" Value="@color">@color</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@code {
+    [CascadingParameter(Name = "ProductFilter")]
+    public PhoneFilter Filter { get; set; } = new PhoneFilter();
+    private PhoneFilterHelper filterSpecs = new PhoneFilterHelper();
+}

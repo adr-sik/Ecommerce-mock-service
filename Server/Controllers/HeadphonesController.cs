@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models.ProductTypes;
 using Shared.Models.DTOs.ProductTypesDTOs;
+using Shared.Models.Filters;
 
 namespace Server.Controllers
 {
@@ -22,7 +23,7 @@ namespace Server.Controllers
 
         // GET: api/products/headphones/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<HeadphonesDTO>> GetHeadphones(int id)
+        public async Task<ActionResult<HeadphonesDTO>> GetAsync(int id)
         {
             var headphones = await _context.Headphones
                 .Include(h => h.ChargingAccessory)
@@ -40,19 +41,37 @@ namespace Server.Controllers
 
         // GET: api/products/headphones
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HeadphonesDTO>>> GetProducts(int pageNumber = 1, int pageSize = 20)
+        public async Task<ActionResult<IEnumerable<HeadphonesDTO>>> GetAllAsync(int pageNumber = 1, int pageSize = 20, [FromQuery] HeadphonesFilter? filter = null)
         {
             IQueryable<Headphones> query = _context.Headphones;
+
+            if (filter != null)
+            {
+                query = ApplyFilter(query, filter);
+            }
 
             var headphones = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Include(h => h.ChargingAccessory)
                 .Include(h => h.Images)
                 .ToListAsync();
             var headphonesDto = _mapper.Map<List<HeadphonesDTO>>(headphones);
 
             return Ok(headphonesDto);
+        }
+
+        // helper method to apply filters
+        private IQueryable<Headphones> ApplyFilter(IQueryable<Headphones> query, HeadphonesFilter filter)
+        {
+            query = query.Where(h =>
+                (string.IsNullOrEmpty(filter.Brand) || h.Brand == filter.Brand) &&
+                (string.IsNullOrEmpty(filter.Model) || h.Model.Contains(filter.Model)) &&
+                (!filter.MinPrice.HasValue || h.Price >= filter.MinPrice.Value) &&
+                (!filter.MaxPrice.HasValue || h.Price <= filter.MaxPrice.Value) &&
+                (!filter.OnSale.HasValue || filter.OnSale == false || h.Sale.HasValue) &&
+                (!filter.HeadphoneType.HasValue || h.HeadphoneType == filter.HeadphoneType.Value)
+                );
+            return query;
         }
     }
 }

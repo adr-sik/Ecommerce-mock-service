@@ -1,16 +1,25 @@
-﻿@inject NavigationManager NavigationManager
-@using Client.Helpers
-@using Microsoft.AspNetCore.WebUtilities
-@using Microsoft.Extensions.Primitives;
+﻿@using Client.Helpers
 @using Shared.Models.Filters
 @using Shared.Models.Enums
 
 @if (Filter != null)
 {
     <MudSelect T="CpuBrand?" @bind-Value="Filter.CpuBrand" Label="Cpu Brand">
-        @foreach (CpuBrand brand in filterSpecs.GetBrands())
+        @foreach (CpuBrand cpuBrand in filterSpecs.GetCpuBrands())
         {
-            <MudSelectItem T="CpuBrand?" Value="@brand">@brand.ToString()</MudSelectItem>
+            <MudSelectItem T="CpuBrand?" Value="@cpuBrand">@cpuBrand.ToString()</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="string" @bind-Value="Filter.GpuBrand" Label="Gpu Brand">
+        @foreach (string gpuBrand in filterSpecs.GetGpuBrands())
+        {
+            <MudSelectItem T="string" Value="@gpuBrand">@gpuBrand.ToString()</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="int?" @bind-Value="Filter.RamCapacity" Label="Ram">
+        @foreach (int ramCapacity in filterSpecs.GetRamRanges())
+        {
+            <MudSelectItem T="int?" Value="@ramCapacity">@ramCapacity.ToString()</MudSelectItem>
         }
     </MudSelect>
 }

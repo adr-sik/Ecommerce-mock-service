@@ -2,9 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Models;
 using Server.Models.ProductTypes;
-using Shared.Models.DTOs;
 using Shared.Models.DTOs.ProductTypesDTOs;
 using Shared.Models.Filters;
 
@@ -25,7 +23,7 @@ namespace Server.Controllers
 
         // GET: api/products/laptops/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<LaptopDTO>> GetLaptop(int id)
+        public async Task<ActionResult<LaptopDTO>> GetAsync(int id)
         {
             var laptop = await _context.Laptops
                 .Include(l => l.Cpu)
@@ -46,7 +44,7 @@ namespace Server.Controllers
 
         // GET: api/products/laptops
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<LaptopDTO>>> GetLaptops(int pageNumber = 1, int pageSize = 20, [FromQuery] LaptopFilter? filter = null)
+        public async Task<ActionResult<IEnumerable<LaptopDTO>>> GetAllAsync(int pageNumber = 1, int pageSize = 20, [FromQuery] LaptopFilter? filter = null)
         {
             IQueryable<Laptop> query = _context.Laptops;
 
@@ -58,10 +56,6 @@ namespace Server.Controllers
             var laptops = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Include(l => l.Cpu)
-                .Include(l => l.Gpu)
-                .Include(l => l.Ram)
-                .Include(l => l.Display)
                 .Include(l => l.Images)
                 .ToListAsync();
             var laptopsDto = _mapper.Map<List<LaptopDTO>>(laptops);
