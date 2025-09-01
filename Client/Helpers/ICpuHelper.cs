@@ -4,7 +4,7 @@ namespace Client.Helpers
 {
     public interface ICpuHelper
     {
-        public List<CpuBrand> GetBrands();
+        public List<CpuBrand> GetCpuBrands();
         // Free to expand
     }
 }

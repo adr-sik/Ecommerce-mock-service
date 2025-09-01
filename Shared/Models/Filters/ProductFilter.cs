@@ -55,10 +55,17 @@ namespace Shared.Models.Filters
             return queryStringBuilder.ToString();
         }
 
+        // takes uri, separates query from it an parses it an object
         public void PopulateFromUri(string uri)
         {
-            Dictionary<string, StringValues> paramDictionary = QueryHelpers.ParseQuery(uri);
-            var filterProperties = typeof(LaptopFilter).GetProperties();
+            Console.WriteLine(uri);
+            string query = uri.Split("?")[1];
+            Dictionary<string, StringValues> paramDictionary = QueryHelpers.ParseQuery(query);
+            foreach (var key in paramDictionary.Keys)
+            {
+                Console.WriteLine($"{key}, {paramDictionary[key].ToString()}");
+            }
+            var filterProperties = this.GetType().GetProperties();
 
             foreach (var property in filterProperties)
             {

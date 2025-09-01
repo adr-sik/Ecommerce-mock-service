@@ -5,7 +5,9 @@
 @inject Client.Services.FilterStateService FilterStateService
 
 <MudPaper Class="pa-4">
-    @if(_isLoaded){
+    @if(_isLoaded)
+    {
+        <p>@filterType.Name</p>
         @* common filtering logic // TODO add test besed search*@
         <MudNumericField @bind-Value="Filter.MinPrice" Label="Min Price"></MudNumericField>
         <MudNumericField @bind-Value="Filter.MaxPrice" Label="Max Price"></MudNumericField>
@@ -20,12 +22,15 @@
                 </CascadingValue>
                 break;
             case "headphones":
-
+                <CascadingValue Value="@((HeadphonesFilter)Filter)" Name="ProductFilter" IsFixed="true">
+                    <Client.Components.Layout.Filter_Components.HeadphonesFilterMenu />
+                </CascadingValue>
                 break;
             case "phones":
-
+                <CascadingValue Value="@((PhoneFilter)Filter)" Name="ProductFilter" IsFixed="true">
+                    <Client.Components.Layout.Filter_Components.PhoneFilterMenu />
+                </CascadingValue>
                 break;
-
         }
 
         <MudButton OnClick="ApplyFilters" Variant="Variant.Filled" ButtonType="ButtonType.Button">Apply</MudButton>
@@ -40,7 +45,6 @@
 
     protected override void OnParametersSet()
     {
-        //TODO solve the bug with not loading the first parameter
         if (Filter == null) return;
         FilterStateService.OnChange += OnFilterStateChanged;
 
@@ -48,7 +52,7 @@
         filterType = ProductCategoryMap.GetFilterType(category);
 
         Filter = (ProductFilter)Activator.CreateInstance(filterType);
-        Filter.PopulateFromUri(NavigationManager.Uri);
+        if (NavigationManager.Uri.Contains("?")) { Filter.PopulateFromUri(NavigationManager.Uri); }
 
         _isLoaded = true;
     }
