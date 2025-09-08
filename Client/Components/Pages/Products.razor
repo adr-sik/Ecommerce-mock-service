@@ -68,7 +68,7 @@ else
             var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
             IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
 
-            products = await service.GetAllProductsAsync(queryString);
+            products = await service.GetAllProductsAsync("", queryString);
 
             StateHasChanged();
 

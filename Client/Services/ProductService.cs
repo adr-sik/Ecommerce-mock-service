@@ -11,9 +11,9 @@ namespace Client.Services
         public ProductService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
 
         // Utilize methods from base class
-        public async Task<List<ProductDTO>> GetAllProductsAsync(string? query = "")
+        public async Task<List<ProductDTO>> GetAllProductsAsync(string? query = "", string? sort = "")
         {
-            var items = await this.GetAllAsync(query);
+            var items = await this.GetAllAsync(query, sort);
             return items.Cast<ProductDTO>().ToList();
         }
 

@@ -19,11 +19,11 @@ namespace Client.Services
             _jsonOptions = jsonOptions;
         }
 
-        protected async Task<List<T>> GetAllAsync(string? query = "")
+        protected async Task<List<T>> GetAllAsync(string? query = "", string? sort = "")
         {
             try
             {
-                var items = await _http.GetFromJsonAsync<List<T>>($"{Endpoint}{query}", _jsonOptions);
+                var items = await _http.GetFromJsonAsync<List<T>>($"{Endpoint}{query}{sort}", _jsonOptions);
                 Console.WriteLine($"Fetched {items?.Count ?? 0} items from {Endpoint}");
                 return items ?? new List<T>();
             }

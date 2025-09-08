@@ -8,62 +8,14 @@ using Shared.Models.Filters;
 
 namespace Server.Controllers
 {
-    [Route("api/products/phones")]
+    [Route("api/products/[controller]")]
     [ApiController]
-    public class PhonesController : ControllerBase
+    public class PhonesController : ProductsController<Phone, PhoneDTO, PhoneFilter>
     {
-        private readonly EcommerceContext _context;
-        private readonly IMapper _mapper;
-
-        public PhonesController(EcommerceContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
-        // GET: api/products/phones/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PhoneDTO>> GetPhone(int id)
-        {
-            var phone = await _context.Phones
-                .Include(l => l.Cpu)
-                .Include(l => l.Camera)
-                .Include(l => l.Display)
-                .Include(l => l.Images)
-                .FirstOrDefaultAsync(l => l.Id == id);
-
-            if (phone == null)
-            {
-                return NotFound();
-            }
-
-            var phoneDto = _mapper.Map<PhoneDTO>(phone);
-            return Ok(phoneDto);
-        }
-
-        // GET: api/products/phones
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PhoneDTO>>> GetPhones(int pageNumber = 1, int pageSize = 20, [FromQuery] PhoneFilter? filter = null)
-        {
-            IQueryable<Phone> query = _context.Phones;
-
-            if (filter != null)
-            {
-                query = ApplyFilter(query, filter);
-            }
-
-            var phones = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Include(l => l.Images)
-                .ToListAsync();
-            var phonesDto = _mapper.Map<List<PhoneDTO>>(phones);
-
-            return Ok(phonesDto);
-        }
+        public PhonesController(EcommerceContext context, IMapper mapper) : base(context, mapper) { }
 
         // helper method to apply filters
-        private IQueryable<Phone> ApplyFilter(IQueryable<Phone> query, PhoneFilter filter)
+        protected override IQueryable<Phone> ApplyFilter(IQueryable<Phone> query, PhoneFilter filter)
         {
             query = query.Where(p =>
                 (string.IsNullOrEmpty(filter.Brand) || p.Brand == filter.Brand) &&
@@ -76,5 +28,14 @@ namespace Server.Controllers
             );
             return query;
         }
+
+        protected override IQueryable<Phone> IncludeNavigation(IQueryable<Phone> query)
+        {
+            return query
+                .Include(l => l.Cpu)
+                .Include(l => l.Camera)
+                .Include(l => l.Display);
+        }
+
     }
 }

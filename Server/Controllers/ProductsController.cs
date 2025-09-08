@@ -1,22 +1,27 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
 using Server.Models.ProductTypes;
+using Shared.Models;
 using Shared.Models.DTOs;
 using Shared.Models.DTOs.ProductTypesDTOs;
+using Shared.Models.Filters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Server.Controllers
 {
-    [Route("api/products/")]
-    [ApiController]
-    public abstract class ProductsController<ProductDTO, ProductFilter> : ControllerBase
+    public abstract class ProductsController<TEntity, TDto, TFilter> : ControllerBase
+        where TEntity : Product
+        where TDto : ProductDTO
+        where TFilter : ProductFilter
     {
         private readonly EcommerceContext _context;
         private readonly IMapper _mapper;
@@ -28,22 +33,45 @@ namespace Server.Controllers
         }
 
         [HttpGet]
-        [HttpGet("{type:alpha}")]
-        protected async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts(string type = null, int pageNumber = 1, int pageSize = 20)
+        public async Task<ActionResult<PagedResponse<TDto>>> GetAllAsync(
+            [FromQuery] TFilter? filter = null,
+            string? sortOrder = null,
+            string? sortColumn = null,
+            int pageNumber = 1)
         {
-            IQueryable<Product> query = _context.Products;
+            IQueryable<TEntity> query = _context.Set<TEntity>();
 
-            var products = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-            var productsDto = _mapper.Map<List<ProductDTO>>(products);
+            if (filter != null)
+            {
+                query = ApplyFilter(query, filter);
+            }
 
-            return Ok(productsDto);
+            if (!string.IsNullOrWhiteSpace(sortColumn))
+            {               
+                switch (sortColumn.ToLower())
+                {
+                    case "price":
+                        query = sortOrder?.Equals("desc", StringComparison.OrdinalIgnoreCase) == true
+                            ? query.OrderByDescending(p => p.Price)
+                            : query.OrderBy(p => p.Price);
+                        break;
+                }
+            }
+
+            var pagedResponse = await PagedResponse<TEntity>.CreateAsync(query, pageNumber);
+            // additional mapping for DTO
+            return Ok(pagedResponse.Map<TDto>(_mapper));
         }
 
         // GET: api/Products/5
         [HttpGet("{id:int}")]
-        protected async Task<ActionResult<ProductDTO>> GetProduct(int id)
+        public async Task<ActionResult<TDto>> GetAsync(int id)
         {
-            var product = await _context.Products
+            IQueryable<TEntity> query = _context.Set<TEntity>();
+
+            query = IncludeNavigation(query);
+
+            var product = await query
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -52,7 +80,7 @@ namespace Server.Controllers
                 return NotFound();
             }
 
-            return Ok(_mapper.Map<ProductDTO>(product));
+            return Ok(_mapper.Map<TDto>(product));
         }
 
         // PUT: api/Products/5
@@ -117,5 +145,8 @@ namespace Server.Controllers
         {
             return _context.Products.Any(e => e.Id == id);
         }
+
+        protected abstract IQueryable<TEntity> ApplyFilter(IQueryable<TEntity> query, TFilter filter);
+        protected abstract IQueryable<TEntity> IncludeNavigation(IQueryable<TEntity> query);
     }
 }
