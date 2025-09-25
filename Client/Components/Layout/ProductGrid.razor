@@ -1,7 +1,7 @@
 ﻿@using Shared.Models.DTOs
 @inject NavigationManager NavigationManager
 
-@if (products == null)
+@if (products == null || !products.Any())
 {
     <p><em>Loading... @Category</em></p>
 }
@@ -17,7 +17,7 @@ else
                     </MudCardHeader>
                     <MudCardContent>
                         <div class="d-flex justify-center">
-                            <MudImage Src="@product.Images.First().Path" Alt="@product.Model" Elevation="25" Class="rounded-lg" Height="200" Width="200" ObjectFit="ObjectFit.Contain" />
+                            <MudImage Src="@product.Images?.FirstOrDefault()?.Path" Alt="@product.Model" Elevation="25" Class="rounded-lg" Height="200" Width="200" ObjectFit="ObjectFit.Contain" />
                         </div>
                         <div>
                             @if (@product.Sale.HasValue)

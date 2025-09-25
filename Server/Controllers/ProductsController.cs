@@ -58,6 +58,8 @@ namespace Server.Controllers
                 }
             }
 
+            query = query.Include(p => p.Images);
+
             var pagedResponse = await PagedResponse<TEntity>.CreateAsync(query, pageNumber);
             // additional mapping for DTO
             return Ok(pagedResponse.Map<TDto>(_mapper));

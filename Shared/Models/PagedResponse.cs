@@ -11,6 +11,7 @@ namespace Shared.Models
 {
     public class PagedResponse<T>
     {
+        public PagedResponse() { }
         private PagedResponse(List<T> items, int page, int totalCount)
         {
             Items = items;
@@ -18,9 +19,9 @@ namespace Shared.Models
             TotalCount = totalCount;
         }
         public List<T> Items { get; set; }
-        public int Page {  get; }
+        public int Page { get; init;  }
         //public int PageSize { get; }
-        public int TotalCount { get; }  
+        public int TotalCount { get; init; }  
         
         public static async Task<PagedResponse<T>> CreateAsync(IQueryable<T> query, int page)
         {
