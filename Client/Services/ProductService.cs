@@ -12,42 +12,29 @@ namespace Client.Services
         protected override string Endpoint => $"api/products/{typeof(T).Name.ToLowerInvariant().Replace("dto", "").Pluralize()}";
         public ProductService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
 
+        // Utilizing methods from base class
+
         // Get products with pagination
         public async Task<PagedResponse<ProductDTO>> GetPagniatedProductsAsync(
         string? query,
         int pageNumber)
         {
-            query = string.IsNullOrEmpty(query) ? $"?pageNumber={pageNumber}" : $"{query}&pageNumber={pageNumber}";
-            try
-            {
-                var response = await _http.GetAsync($"{Endpoint}{query}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var pagedResponse = await response.Content.ReadFromJsonAsync<PagedResponse<ProductDTO>>(_jsonOptions);
-                    return pagedResponse;
-                }
-                return default;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error fetching paginated items from {Endpoint}: {ex.Message}");
-                return default;
-            }
+            var items = await this.GetPagniatedAsync(query, pageNumber);
+            return items.Map<ProductDTO>(new AutoMapper.Mapper(new AutoMapper.MapperConfiguration(cfg => cfg.CreateMap<T, ProductDTO>())));
         }
 
-        // Utilize methods from base class
+        // Get all products
         public async Task<List<ProductDTO>> GetAllProductsAsync(string? query = "", string? sort = "")
         {
             var items = await this.GetAllAsync(query, sort);
             return items.Cast<ProductDTO>().ToList();
         }
 
+        // Get product by ID
         public async Task<ProductDTO?> GetProductByIdAsync(int id)
         {
-
             var product = await this.GetByIdAsync(id);
             return product;
-
         }
     }
 }

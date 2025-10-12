@@ -7,11 +7,9 @@
 <MudPaper Class="pa-4">
     @if(_isLoaded)
     {
-        <p>@filterType.Name</p>
         @* common filtering logic // TODO add test besed search*@
         <MudNumericField @bind-Value="Filter.MinPrice" Label="Min Price"></MudNumericField>
         <MudNumericField @bind-Value="Filter.MaxPrice" Label="Max Price"></MudNumericField>
-        <MudCheckBox @bind-Value="Filter.OnSale" Label="Sale"></MudCheckBox>
 
         @* unique filtering logic *@
         @switch (category)
@@ -32,6 +30,8 @@
                 </CascadingValue>
                 break;
         }
+
+        <MudCheckBox @bind-Value="Filter.OnSale" Label="Sale"></MudCheckBox>
 
         <MudButton OnClick="ApplyFilters" Variant="Variant.Filled" ButtonType="ButtonType.Button">Apply</MudButton>
     }

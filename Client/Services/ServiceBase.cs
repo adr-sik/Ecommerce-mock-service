@@ -1,7 +1,7 @@
-﻿using System.Net;
+﻿using Shared.Models;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Shared.Models.DTOs;
 
 namespace Client.Services
 {
@@ -17,6 +17,28 @@ namespace Client.Services
         {
             _http = http;
             _jsonOptions = jsonOptions;
+        }
+
+        public async Task<PagedResponse<T>> GetPagniatedAsync(
+        string? query,
+        int pageNumber)
+        {
+            query = string.IsNullOrEmpty(query) ? $"?pageNumber={pageNumber}" : $"{query}&pageNumber={pageNumber}";
+            try
+            {
+                var response = await _http.GetAsync($"{Endpoint}{query}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var pagedResponse = await response.Content.ReadFromJsonAsync<PagedResponse<T>>(_jsonOptions);
+                    return pagedResponse;
+                }
+                return default;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error fetching paginated items from {Endpoint}: {ex.Message}");
+                return default;
+            }
         }
 
         protected async Task<List<T>> GetAllAsync(string? query = "", string? sort = "")

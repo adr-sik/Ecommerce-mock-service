@@ -21,7 +21,6 @@
 }
 else
 {
-    <p>@filterQuery</p>
     <ProductGrid products="@products" Category="@Category" />
 
     <div class="d-flex flex-column align-center mt-5 mb-5">
@@ -41,7 +40,6 @@ else
     private int totalPages;
 
     private string CategoryDisplay { get; set; } = "Loading...";
-    public string filterQuery { get; set; } = "";
     // prevents double loading
 	//private PersistingComponentStateSubscription persistingSubscription; TODO : fix double loading issue
 
@@ -98,7 +96,6 @@ else
             var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
             IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
 
-            //products = await service.GetAllProductsAsync("", queryString);
             var pagedResponse = await service.GetPagniatedProductsAsync(queryString, currentPage);
             totalPages = (int)Math.Ceiling((double)pagedResponse.TotalCount / 20);
             Console.WriteLine($"TotalCount: {pagedResponse.TotalCount}, Items: {pagedResponse.Items.Count}");

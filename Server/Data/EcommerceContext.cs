@@ -26,13 +26,7 @@ namespace Server.Data
         public DbSet<Camera> Cameras { get; set; }
         public DbSet<ChargingAccessory> ChargingAccessory { get; set; }
         public DbSet<Ram> Rams { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Data Source=.\\SQLEXPRESS;Initial Catalog=ecom;Integrated Security=True;TrustServerCertificate=True");
-        }
-
-        
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
