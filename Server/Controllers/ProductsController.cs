@@ -35,7 +35,7 @@ namespace Server.Controllers
         [HttpGet]
         public async Task<ActionResult<PagedResponse<TDto>>> GetAllAsync(
             [FromQuery] TFilter? filter = null,
-            string? sortOrder = null,
+            bool? sortDescending = null,
             string? sortColumn = null,
             int pageNumber = 1)
         {
@@ -51,7 +51,7 @@ namespace Server.Controllers
                 switch (sortColumn.ToLower())
                 {
                     case "price":
-                        query = sortOrder?.Equals("desc", StringComparison.OrdinalIgnoreCase) == true
+                        query = sortDescending == true
                             ? query.OrderByDescending(p => p.Price)
                             : query.OrderBy(p => p.Price);
                         break;

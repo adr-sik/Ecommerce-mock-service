@@ -21,6 +21,19 @@
 }
 else
 {
+    <div class="d-flex align-items-center mb-3">
+        <MudSelect T="string" Value="@selectedSortColumn" ValueChanged="@(col => { selectedSortColumn = col; HandleSorting(col, selectedDescending); })">
+            @foreach (var column in sortingColumns)
+            {
+                <MudSelectItem Value="@column">@column</MudSelectItem>
+            }
+        </MudSelect>
+        <MudText> Order by: </MudText>
+        <MudCheckBox ReadOnly="@OrderBoxEnbled" T="bool" Value="@selectedDescending" ValueChanged="@(desc => { selectedDescending = desc; HandleSorting(selectedSortColumn, desc); })"
+                     CheckedIcon="@Icons.Material.Filled.ArrowDownward" UncheckedIcon="@Icons.Material.Filled.ArrowUpward">
+        </MudCheckBox>
+    </div>
+
     <ProductGrid products="@products" Category="@Category" />
 
     <div class="d-flex flex-column align-center mt-5 mb-5">
@@ -33,15 +46,18 @@ else
     public string Category { get; set; } = null!;
     private bool _isLoading = true;
     private bool _isInitialNavigation = true;
-    // pagination varaibles
+	private bool OrderBoxEnbled => string.IsNullOrWhiteSpace(selectedSortColumn);
     private List<ProductDTO> products = new();
-    
+
+    private string selectedSortColumn;
+    private bool selectedDescending;
     private int currentPage;
     private int totalPages;
 
     private string CategoryDisplay { get; set; } = "Loading...";
+    private readonly List<string> sortingColumns = new() { "Price" };
     // prevents double loading
-	//private PersistingComponentStateSubscription persistingSubscription; TODO : fix double loading issue
+    //private PersistingComponentStateSubscription persistingSubscription; TODO : fix double loading issue
 
     protected override void OnInitialized()
     {
@@ -74,6 +90,16 @@ else
             var uri = new Uri(NavigationManager.Uri);
             var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
+            selectedDescending = queryParams.TryGetValue("sortDescending", out var sortDescValues) && 
+            bool.TryParse(sortDescValues.FirstOrDefault(), out var parsedSortDesc) 
+            ? parsedSortDesc 
+            : false;
+
+            selectedSortColumn = queryParams.TryGetValue("sortColumn", out var sortColValues) &&
+            !string.IsNullOrWhiteSpace(sortColValues.FirstOrDefault())
+            ? sortColValues.FirstOrDefault()!
+			: "";
+
             if (queryParams.TryGetValue("pageNumber", out var pageValues) && int.TryParse(pageValues.FirstOrDefault(), out var parsedPage))
             {
                 currentPage = Math.Max(1, parsedPage);
@@ -103,9 +129,9 @@ else
             {
                 Console.WriteLine($"No products found for category '{Category}'.");
                 return;
-			}
-			products = pagedResponse.Items.ToList();
-			Console.WriteLine($"Loaded {products.Count} products for category '{Category}'.");
+            }
+            products = pagedResponse.Items.ToList();
+            Console.WriteLine($"Loaded {products.Count} products for category '{Category}'.");
             //
             StateHasChanged();
 
@@ -115,7 +141,7 @@ else
         catch (InvalidOperationException e)
         {
             Console.WriteLine($"Category '{Category}' not found or invalid.");
-			Console.WriteLine(e.Message);
+            Console.WriteLine(e.Message);
             NavigationManager.NavigateTo("/notfound", forceLoad: true);
         }
         catch (Exception e)
@@ -127,7 +153,7 @@ else
         {
             _isLoading = false;
             StateHasChanged();
-		}
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -139,12 +165,27 @@ else
 
     private void OnPageChanged(int page)
     {
-		var uriBuilder = new UriBuilder(NavigationManager.Uri);
-		var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
-		query.Set("pageNumber", page.ToString());
-		uriBuilder.Query = query.ToString();
-		NavigationManager.NavigateTo(uriBuilder.ToString());
-	}
+        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
+        query.Set("pageNumber", page.ToString());
+        uriBuilder.Query = query.ToString();
+        NavigationManager.NavigateTo(uriBuilder.ToString());
+    }
+
+    private void HandleSorting(string sortColumn, bool? sortDescending)
+    {
+        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
+        query.Set("sortColumn", sortColumn);
+
+        if (sortDescending.HasValue)
+            query.Set("sortDescending", sortDescending.Value.ToString());
+        else
+			query.Remove("sortDescending");
+
+        uriBuilder.Query = query.ToString();
+        NavigationManager.NavigateTo(uriBuilder.ToString());
+    }
 
     private Task PersistData()
     {
