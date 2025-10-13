@@ -74,15 +74,14 @@ else
             var uri = new Uri(NavigationManager.Uri);
             var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
-			currentPage = 1; // Default to the first page if not specified
             if (queryParams.TryGetValue("pageNumber", out var pageValues) && int.TryParse(pageValues.FirstOrDefault(), out var parsedPage))
             {
-                currentPage = parsedPage;		
+                currentPage = Math.Max(1, parsedPage);
             }
-            queryParams.Remove("pageNumber"); // Remove pageNumber to avoid duplication in the query string
-            var queryString = queryParams.Any()
-                ? "?" + string.Join("&", queryParams.Select(kvp => $"{kvp.Key}={kvp.Value.ToString()}"))
-                : string.Empty;
+            else
+            {
+                currentPage = 1;
+            }
 
             // Get DTO based on a map -> redirect if no match found
             Type dtoType = ProductCategoryMap.GetDtoType(Category);
@@ -91,9 +90,9 @@ else
             var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
             IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
 
-            var pagedResponse = await service.GetPagniatedProductsAsync(queryString, currentPage);
+            var pagedResponse = await service.GetPagniatedProductsAsync(uri.Query);
             totalPages = (int)Math.Ceiling((double)pagedResponse.TotalCount / 20);
-            Console.WriteLine($"TotalCount: {pagedResponse.TotalCount}, Items: {pagedResponse.Items.Count}");
+            Console.WriteLine($"TotalCount: {pagedResponse.TotalCount}, Items: {pagedResponse.Items.Count}, PageCount: {totalPages}");
             //
             if (pagedResponse == null)
             {

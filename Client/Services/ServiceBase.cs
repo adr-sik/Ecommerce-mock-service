@@ -23,10 +23,9 @@ namespace Client.Services
         }
 
         public async Task<PagedResponse<T>> GetPagniatedAsync(
-        string? query,
-        int? pageNumber)
+        string? query)
         {
-            query = string.IsNullOrEmpty(query) ? $"?pageNumber={pageNumber}" : $"{query}&pageNumber={pageNumber}";
+            //query = string.IsNullOrEmpty(query) ? $"?pageNumber={pageNumber}" : $"{query}&pageNumber={pageNumber}";
             try
             {
                 var response = await _http.GetAsync($"{Endpoint}{query}");

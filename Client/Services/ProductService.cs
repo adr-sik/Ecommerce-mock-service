@@ -17,10 +17,9 @@ namespace Client.Services
 
         // Get products with pagination
         public async Task<PagedResponse<ProductDTO>> GetPagniatedProductsAsync(
-        string? query,
-        int? pageNumber)
+        string? query)
         {
-            var response = await this.GetPagniatedAsync(query, pageNumber);
+            var response = await this.GetPagniatedAsync(query);
             return new PagedResponse<ProductDTO> 
             {
                 Items = response.Items.Cast<ProductDTO>().ToList(),
