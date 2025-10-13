@@ -16,6 +16,7 @@
   
 4. Planned Features
 * Shopping cart
+* Order processing
 * User registration
 * JWT Authentication
 * Admin panel
