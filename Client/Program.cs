@@ -17,6 +17,7 @@ namespace Client
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddMudServices();
+            //builder.Services.AddAutoMapper(typeof(Program));
 
             // Add services to the container.
             builder.Services.AddRazorComponents()

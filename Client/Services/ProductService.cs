@@ -4,6 +4,7 @@ using System.Text.Json;
 using Humanizer;
 using Shared.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using AutoMapper;
 
 namespace Client.Services
 {
@@ -17,10 +18,15 @@ namespace Client.Services
         // Get products with pagination
         public async Task<PagedResponse<ProductDTO>> GetPagniatedProductsAsync(
         string? query,
-        int pageNumber)
+        int? pageNumber)
         {
-            var items = await this.GetPagniatedAsync(query, pageNumber);
-            return items.Map<ProductDTO>(new AutoMapper.Mapper(new AutoMapper.MapperConfiguration(cfg => cfg.CreateMap<T, ProductDTO>())));
+            var response = await this.GetPagniatedAsync(query, pageNumber);
+            return new PagedResponse<ProductDTO> 
+            {
+                Items = response.Items.Cast<ProductDTO>().ToList(),
+                Page = response.Page,
+                TotalCount = response.TotalCount
+            };
         }
 
         // Get all products

@@ -1,7 +1,9 @@
-﻿using Shared.Models;
+﻿using AutoMapper;
+using Shared.Models;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using static MudBlazor.CategoryTypes;
 
 namespace Client.Services
 {
@@ -10,6 +12,7 @@ namespace Client.Services
     {
         protected readonly HttpClient _http;
         protected readonly JsonSerializerOptions _jsonOptions;
+        protected readonly IMapper _mapper;
 
         protected abstract string Endpoint { get; }
 
@@ -21,7 +24,7 @@ namespace Client.Services
 
         public async Task<PagedResponse<T>> GetPagniatedAsync(
         string? query,
-        int pageNumber)
+        int? pageNumber)
         {
             query = string.IsNullOrEmpty(query) ? $"?pageNumber={pageNumber}" : $"{query}&pageNumber={pageNumber}";
             try

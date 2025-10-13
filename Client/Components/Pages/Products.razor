@@ -75,14 +75,9 @@ else
             var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
 			currentPage = 1; // Default to the first page if not specified
-            foreach (var param in queryParams)
-            {
-				Console.WriteLine($"Query Parameter: {param.Key} = {param.Value}");
-            }
             if (queryParams.TryGetValue("pageNumber", out var pageValues) && int.TryParse(pageValues.FirstOrDefault(), out var parsedPage))
             {
                 currentPage = parsedPage;		
-				Console.WriteLine($"Current Page: {currentPage} and {parsedPage}");
             }
             queryParams.Remove("pageNumber"); // Remove pageNumber to avoid duplication in the query string
             var queryString = queryParams.Any()
@@ -118,9 +113,10 @@ else
             CategoryDisplay = Category.ToLowerInvariant();
             CategoryDisplay = string.Concat(CategoryDisplay[0].ToString().ToUpper(), CategoryDisplay.AsSpan(1));
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException e)
         {
             Console.WriteLine($"Category '{Category}' not found or invalid.");
+			Console.WriteLine(e.Message);
             NavigationManager.NavigateTo("/notfound", forceLoad: true);
         }
         catch (Exception e)
