@@ -9,18 +9,20 @@ namespace Server.Models
 {
     public class User
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
-        public string Name { get; set; } = null!;
+        public string Username { get; set; } = string.Empty;
         [Required]
-        public string Surname { get; set; } = null!;
+        public string PasswordHash { get; set; } = string.Empty;
         [Required]
-        public string Email { get; set; } = null!;
-        [Required]
-        public string Password { get; set; } = null!;
+        public string Email { get; set; } = string.Empty;
         public ICollection<User> Referred { get; set; } = new List<User>();
-        public int? ReferralId { get; set; }
+        public Guid? ReferralId { get; set; }
         public User? Referral { get; set; }
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public string Role { get; set; } = String.Empty;
+        public string RefreshToken { get; set; } = String.Empty;
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+        // TODO: Change Role to enum
     }
 }

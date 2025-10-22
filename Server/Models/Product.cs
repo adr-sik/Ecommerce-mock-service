@@ -10,9 +10,10 @@ using System.Threading.Tasks;
 
 namespace Server.Models
 {
-    [JsonDerivedType(typeof(Phone), "phone")]
-    [JsonDerivedType(typeof(Laptop), "laptop")]
-    [JsonDerivedType(typeof(Headphones), "headphones")]
+    // TODO: Add JsonDerivedType attributes when using System.Text.Json for polymorphic serialization
+    //[JsonDerivedType(typeof(Phone), "phone")]
+    //[JsonDerivedType(typeof(Laptop), "laptop")]
+    //[JsonDerivedType(typeof(Headphones), "headphones")]
     public abstract class Product
     {
         public int Id { get; set; }

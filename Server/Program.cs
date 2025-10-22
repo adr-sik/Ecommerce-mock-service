@@ -4,6 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Server.Data;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Microsoft.AspNetCore.OpenApi;
+using Scalar.AspNetCore;
+using Server.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Server
 {
@@ -22,11 +28,9 @@ namespace Server
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
-
-                        //options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                     });
 
-            builder.Services.AddAutoMapper(typeof(Program));
+            builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 
             // Add CORS policy
             builder.Services.AddCors(options =>
@@ -41,24 +45,42 @@ namespace Server
             });
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddOpenApi();
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        ValidateLifetime = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Token"]!)),
+                        ValidateIssuerSigningKey = true
+                    };
+                });
+
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.MapOpenApi();
+                app.MapScalarApiReference();
 
                 using (var scope = app.Services.CreateScope())
                 {
                     var services = scope.ServiceProvider;
                     var context = services.GetRequiredService<EcommerceContext>();
 
-                    context.Database.EnsureDeleted();
-                    context.Database.Migrate();
+                    //context.Database.EnsureDeleted();
+                    //context.Database.Migrate();
 
-                    SeedData.Initialize(context);
+                    //SeedData.Initialize(context);
                 }
             }
 

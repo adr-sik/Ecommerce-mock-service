@@ -16,7 +16,7 @@ namespace Server.Models
         public string? Comments { get; set; }
         public ICollection<Product> Products { get; set; } = new List<Product>();
         public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public User User { get; set; } = null!;
     }
 }
