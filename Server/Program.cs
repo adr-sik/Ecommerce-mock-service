@@ -61,6 +61,18 @@ namespace Server
                             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Token"]!)),
                         ValidateIssuerSigningKey = true
                     };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            context.Request.Cookies.TryGetValue("AccessToken", out var accessToken);
+                            if(!string.IsNullOrEmpty(accessToken))
+                                context.Token = accessToken;
+
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -88,6 +100,7 @@ namespace Server
 
             app.UseCors();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

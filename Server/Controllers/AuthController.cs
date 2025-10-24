@@ -35,15 +35,27 @@ namespace Server.Controllers
             if (result == null)
                 return BadRequest("Invalid username or password.");
 
+            authService.SetTokensInsideCookie(result, HttpContext);
+
             return Ok(result);
         }
 
         [HttpPost("refresh-token")]
-        public async Task<ActionResult<TokenResponseDTO>> RefreshToken(RefreshTokenRequestDTO request)
+        public async Task<ActionResult<TokenResponseDTO>> RefreshToken()
         {
-            var result = await authService.RefreshTokensAsync(request);
+            var refreshToken = Request.Cookies["RefreshToken"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest("Refresh token not found.");
+
+            var userId = authService.GetUserIdFromClaims(User);
+            if (userId == Guid.Empty)
+                return BadRequest("Invalid or missing user.");
+
+            var result = await authService.RefreshTokensAsync(userId, refreshToken);
             if (result == null || result.AccessToken is null || result.RefreshToken is null)
                 return Unauthorized("Invalid refresh token.");
+
+            authService.SetTokensInsideCookie(result, HttpContext);
 
             return Ok(result);
         }

@@ -51,9 +51,9 @@ namespace Server.Services
             return user;
         }
 
-        public async Task<TokenResponseDTO?> RefreshTokensAsync(RefreshTokenRequestDTO request)
+        public async Task<TokenResponseDTO?> RefreshTokensAsync(Guid userId, string refreshToken)
         {
-            var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+            var user = await ValidateRefreshTokenAsync(userId, refreshToken);
             if (user is null)
                 return null;
 
@@ -97,6 +97,18 @@ namespace Server.Services
             return refreshToken;
         }
 
+        public Guid GetUserIdFromClaims(ClaimsPrincipal user)
+        {
+            var userIdClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+            if (Guid.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return userId;
+            }
+
+            return Guid.Empty;
+        }
+
         private string CreateToken(User user)
         {
             var claims = new List<Claim>
@@ -109,17 +121,35 @@ namespace Server.Services
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Token")!));
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var tokenDescriptor = new JwtSecurityToken(
                 issuer: configuration.GetValue<string>("Jwt:Issuer"),
                 audience: configuration.GetValue<string>("Jwt:Audience"),
                 claims: claims,
-                expires: DateTime.Now.AddDays(1),
+                expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: creds
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        }
+
+        public void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context)
+        {
+            context.Response.Cookies.Append("AccessToken", tokens.AccessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.Now.AddMinutes(15)
+            });
+            context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.Now.AddDays(7)
+            });
         }
     }
 }
