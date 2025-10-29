@@ -1,10 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Server.Data;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Microsoft.AspNetCore.OpenApi;
 using Scalar.AspNetCore;
 using Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

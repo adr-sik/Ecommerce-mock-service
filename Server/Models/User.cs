@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Server.Models
 {
@@ -20,9 +15,8 @@ namespace Server.Models
         public Guid? ReferralId { get; set; }
         public User? Referral { get; set; }
         public ICollection<Order> Orders { get; set; } = new List<Order>();
-        public string Role { get; set; } = String.Empty;
+        public string Role { get; set; } = String.Empty; // TODO: Change Role to enum
         public string RefreshToken { get; set; } = String.Empty;
-        public DateTime? RefreshTokenExpiryTime { get; set; }
-        // TODO: Change Role to enum
+        public DateTime? RefreshTokenExpiryTime { get; set; }        
     }
 }

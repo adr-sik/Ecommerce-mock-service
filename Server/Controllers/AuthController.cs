@@ -1,14 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using Server.Models;
 using Server.Services;
 using Shared.Models;
 using Shared.Models.DTOs;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace Server.Controllers
 {
@@ -37,7 +32,7 @@ namespace Server.Controllers
 
             authService.SetTokensInsideCookie(result, HttpContext);
 
-            return Ok(result);
+            return Ok("Login successful");
         }
 
         [HttpPost("refresh-token")]
@@ -53,7 +48,7 @@ namespace Server.Controllers
 
             var result = await authService.RefreshTokensAsync(userId, refreshToken);
             if (result == null || result.AccessToken is null || result.RefreshToken is null)
-                return Unauthorized("Invalid refresh token.");
+                return Unauthorized("Session expired, please log in again.");
 
             authService.SetTokensInsideCookie(result, HttpContext);
 
