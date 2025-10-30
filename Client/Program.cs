@@ -1,5 +1,9 @@
+using Client.Authorization;
 using Client.Components;
 using Client.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using MudBlazor.Services;
 using Shared.Models.DTOs;
@@ -7,6 +11,7 @@ using Shared.Models.DTOs.ProductTypesDTOs;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Client
 {
@@ -17,9 +22,7 @@ namespace Client
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddMudServices();
-            //builder.Services.AddAutoMapper(typeof(Program));
 
-            // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
@@ -31,14 +34,23 @@ namespace Client
             jsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
             builder.Services.AddSingleton(jsonSerializerOptions);
 
-            var apiUrl = builder.Configuration["ApiUrl"];
+            var apiUrl = new Uri(builder.Configuration["ApiUrl"]!);
 
             AddApiService<ProductService<ProductDTO>>(builder, apiUrl);
             AddApiService<ProductService<LaptopDTO>>(builder, apiUrl);
             AddApiService<ProductService<PhoneDTO>>(builder, apiUrl);
             AddApiService<ProductService<HeadphonesDTO>>(builder, apiUrl);
+            AddApiService<UserService>(builder, apiUrl);
+            AddApiService<AuthService>(builder, apiUrl);
 
-            builder.Services.AddSingleton<FilterStateService>();
+            builder.Services.AddScoped<FilterStateService>();
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddAuthorization();
+
+            builder.Services.AddScoped<JwtAuthenticationStateProvider>();
+            builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
+            builder.Services.AddCascadingAuthenticationState();
 
             var app = builder.Build();
 
@@ -64,12 +76,12 @@ namespace Client
         }
 
         // Service registraction helper
-        private static void AddApiService<TService>(WebApplicationBuilder builder, string apiUrl) where TService : class
+        private static void AddApiService<TService>(WebApplicationBuilder builder, Uri apiUrl) where TService : class
         {
             Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
             builder.Services.AddHttpClient<TService>(client =>
             {
-                client.BaseAddress = new Uri(apiUrl);
+                client.BaseAddress = apiUrl;
             });
         }
     }

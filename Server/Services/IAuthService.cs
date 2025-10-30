@@ -7,7 +7,6 @@ namespace Server.Services
 {
     public interface IAuthService
     {
-        Task<User?> RegisterAsync(UserDTO request);
         Task<TokenResponseDTO?> LoginAsync(UserDTO request);
         Task<TokenResponseDTO?> RefreshTokensAsync(Guid userId, string refreshToken);
         void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context);

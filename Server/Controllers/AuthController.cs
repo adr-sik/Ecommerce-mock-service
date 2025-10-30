@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
 using Server.Services;
+using Server.Util;
 using Shared.Models;
 using Shared.Models.DTOs;
 
@@ -13,26 +14,21 @@ namespace Server.Controllers
     {
         public static User user = new();
 
-        [HttpPost("register")]
-        public async Task<ActionResult<User>> Register(UserDTO request)
-        {
-            var user = await authService.RegisterAsync(request);
-            if (user == null)
-                return BadRequest("User already exists.");
-
-            return Ok(user);
-        }
-
         [HttpPost("login")]
-        public async Task<ActionResult<TokenResponseDTO>> Login(UserDTO request)
+        public async Task<ActionResult> Login(UserDTO request)
         {
-            var result = await authService.LoginAsync(request);
-            if (result == null)
+            var tokenResponse = await authService.LoginAsync(request);
+            if (tokenResponse == null)
                 return BadRequest("Invalid username or password.");
 
-            authService.SetTokensInsideCookie(result, HttpContext);
+            authService.SetTokensInsideCookie(tokenResponse, HttpContext);
+            var principal = JwtSerialize.Deserialize(tokenResponse.AccessToken!);
 
-            return Ok("Login successful");
+            return Ok(new
+            {
+                username = principal.Identity.Name,
+                claims = principal.Claims.Select(c => new { type = c.Type, value = c.Value }).ToList()
+            });
         }
 
         [HttpPost("refresh-token")]
@@ -46,13 +42,13 @@ namespace Server.Controllers
             if (userId == Guid.Empty)
                 return BadRequest("Invalid or missing user.");
 
-            var result = await authService.RefreshTokensAsync(userId, refreshToken);
-            if (result == null || result.AccessToken is null || result.RefreshToken is null)
+            var tokenResponse = await authService.RefreshTokensAsync(userId, refreshToken);
+            if (tokenResponse == null || tokenResponse.AccessToken is null || tokenResponse.RefreshToken is null)
                 return Unauthorized("Session expired, please log in again.");
 
-            authService.SetTokensInsideCookie(result, HttpContext);
+            authService.SetTokensInsideCookie(tokenResponse, HttpContext);
 
-            return Ok(result);
+            return Ok();
         }
 
         [Authorize]
@@ -67,6 +63,26 @@ namespace Server.Controllers
         public IActionResult AdminOnlyEndpoint()
         {
             return Ok("You are an admin!");
+        }
+
+        [HttpGet("userinfo")]
+        [Authorize]
+        public IActionResult GetUserInfo()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return Ok(new UserClaimsDTO
+                {
+                    Username = User.Identity.Name,
+                    Claims = User.Claims.Select(c => new ClaimDTO
+                    {
+                        Type = c.Type,
+                        Value = c.Value
+                    }).ToList()
+                });
+            }
+
+            return Unauthorized();
         }
     }
 }

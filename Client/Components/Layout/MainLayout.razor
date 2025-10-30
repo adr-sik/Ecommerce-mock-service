@@ -1,6 +1,8 @@
+@using Client.Authorization
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject Client.Services.FilterStateService FilterStateService
+@inject JwtAuthenticationStateProvider AuthStateProvider
 
 @* Required *@
 <MudThemeProvider />
@@ -96,8 +98,9 @@
     private string sidemenuHeader = "";
     private bool _drawerOpen = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await AuthStateProvider.CheckAuthenticationAsync();
         NavigationManager.LocationChanged += OnLocationChanged;
         FilterStateService.OnChange += OnFilterStateChanged;
     }
@@ -153,4 +156,3 @@
             align-items: center;
         }
 </style>
-

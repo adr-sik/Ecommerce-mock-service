@@ -29,28 +29,6 @@ namespace Server.Services
             return await CreateTokenResponse(user);
         }
 
-        public async Task<User?> RegisterAsync(UserDTO request)
-        {
-            if(await context.Users.AnyAsync(u => u.Username == request.Username))
-            {
-                return null;
-            }
-
-            var user = new User();
-
-            var hashedPassword = new PasswordHasher<User>()
-                .HashPassword(user, request.Password);
-
-            user.Username = request.Username;
-            user.PasswordHash = hashedPassword;
-            user.Email = request.Email;
-
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-
-            return user;
-        }
-
         public async Task<TokenResponseDTO?> RefreshTokensAsync(Guid userId, string refreshToken)
         {
             var user = await ValidateRefreshTokenAsync(userId, refreshToken);
@@ -140,14 +118,14 @@ namespace Server.Services
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.Now.AddMinutes(15)
             });
             context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.Now.AddDays(7)
             });
         }

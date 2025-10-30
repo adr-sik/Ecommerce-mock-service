@@ -29,17 +29,17 @@ namespace Server
 
             builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 
-            // Add CORS policy
-            builder.Services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(policy =>
-                {
-                    //policy.WithOrigins("https://localhost:7128") // your client app URL
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
-            });
+            //// Add CORS policy
+            //builder.Services.AddCors(options =>
+            //{
+            //    options.AddDefaultPolicy(policy =>
+            //    {
+            //        policy.WithOrigins("https://localhost:7030") // your client app URL
+            //              .AllowAnyHeader()
+            //              .AllowAnyMethod()
+            //              .AllowAnyMethod();
+            //    });
+            //});
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddOpenApi();
@@ -73,6 +73,7 @@ namespace Server
                 });
 
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUsersService, UsersService>();
 
             var app = builder.Build();
 

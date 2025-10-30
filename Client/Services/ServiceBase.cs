@@ -12,7 +12,7 @@ namespace Client.Services
     {
         protected readonly HttpClient _http;
         protected readonly JsonSerializerOptions _jsonOptions;
-        protected readonly IMapper _mapper;
+        //protected readonly IMapper _mapper;
 
         protected abstract string Endpoint { get; }
 
@@ -25,7 +25,6 @@ namespace Client.Services
         public async Task<PagedResponse<T>> GetPagniatedAsync(
         string? query)
         {
-            //query = string.IsNullOrEmpty(query) ? $"?pageNumber={pageNumber}" : $"{query}&pageNumber={pageNumber}";
             try
             {
                 var response = await _http.GetAsync($"{Endpoint}{query}");

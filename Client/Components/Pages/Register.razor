@@ -1,8 +1,12 @@
 ﻿@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using Client.Authorization
+@using Services
+@using Shared.Models.DTOs
+@inject NavigationManager NavigationManager
+@inject IServiceProvider ServiceProvider
 
 <h3>Register</h3>
-
-@using System.ComponentModel.DataAnnotations
 
 <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
     <DataAnnotationsValidator />
@@ -71,10 +75,26 @@
 
     }
 
-    private void OnValidSubmit(EditContext context)
+    private async Task OnValidSubmit(EditContext context)
     {
-        success = true;
-        StateHasChanged();
+        var userService = ServiceProvider.GetRequiredService<UserService>();
+        UserDTO user = new UserDTO
+        {
+            Username = model.Username,
+            Password = model.Password            
+        };
+
+        var registerResult = await userService.RegisterAsync(user);
+
+        if (registerResult)
+        {
+            success = true;
+			NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+			Console.WriteLine("Registration failed");
+        }
     }
 }
 
