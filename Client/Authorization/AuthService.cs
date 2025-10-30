@@ -24,6 +24,11 @@ namespace Client.Authorization
             return null;
         }
 
+        public async Task LogoutAsync()
+        {
+            await _http.PostAsync("api/auth/logout", null);
+        }
+
         public async Task<bool> TestAuth()
         {
             var response = await _http.GetAsync($"{Endpoint}");

@@ -84,5 +84,14 @@ namespace Server.Controllers
 
             return Unauthorized();
         }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("accessToken");
+            Response.Cookies.Delete("refreshToken");
+
+            return Ok();
+        }
     }
 }

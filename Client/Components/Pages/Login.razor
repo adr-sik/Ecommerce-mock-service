@@ -37,6 +37,8 @@
 <MudButton OnClick="TestAuth">@auth</MudButton>
 <div></div>
 <MudButton OnClick="TestAdmin">@admin</MudButton>
+<div></div>
+<MudButton OnClick="HandleLogout">Logout</MudButton>
 
 <AuthorizeView>
     <Authorized>
@@ -105,6 +107,12 @@
         admin = isAuth ? "User is an admin" : "User is NOT an admin";
         StateHasChanged();
     }
+
+    private void HandleLogout()
+    {
+        AuthStateProvider.Logout();
+        NavigationManager.NavigateTo("/");
+	}
 }
 
 

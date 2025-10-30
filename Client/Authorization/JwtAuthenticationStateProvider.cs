@@ -51,8 +51,10 @@ namespace Client.Authorization
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
         }
 
-        public void Logout()
+        public async Task Logout()
         {
+            await _authService.LogoutAsync();
+
             _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
         }
