@@ -59,13 +59,12 @@ namespace Server.Util
                 .Replace('-', '+')
                 .Replace('_', '/');
 
-            switch (jwtSegment.Length % 4)
+            int padding = (4 - (fixedBase64.Length % 4)) % 4;
+            if (padding > 0)
             {
-                case 2: fixedBase64 += "=="; break;
-                case 3: fixedBase64 += "="; break;
-                default: throw new Exception("Illegal base64url string!");
+                fixedBase64 += new string('=', padding);
             }
-
+            
             return Convert.FromBase64String(fixedBase64);
         }
     }

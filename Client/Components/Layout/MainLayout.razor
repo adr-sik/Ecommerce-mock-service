@@ -1,8 +1,12 @@
 @using Client.Authorization
+@using Client.Components.Dialog
+@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject Client.Services.FilterStateService FilterStateService
 @inject JwtAuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 @* Required *@
 <MudThemeProvider />
@@ -19,9 +23,25 @@
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
         <MudSpacer />
-        <MudText Typo="Typo.h6">E-Commerce Demo</MudText>
+        <MudText Typo="Typo.h6" Class="centered-title">E-Commerce Demo</MudText>
         <MudSpacer />
-        <MudIconButton Href="/login" Icon="@Icons.Material.Filled.Login" Color="Color.Inherit"/>
+
+        <AuthorizeView>
+            <Authorized>
+                <MudButton Href="/user">
+                    <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">@AuthStateProvider.DisplayName</MudText>
+                    <MudIcon Icon="@Icons.Material.Outlined.Person" Style="@($"color:{Colors.Shades.White};")" />
+                </MudButton>
+                <MudIconButton onclick="OpenLogoutDialogAsync" Icon="@Icons.Material.Filled.Logout" Style="@($"color:{Colors.Shades.White};")" />
+            </Authorized>
+			<NotAuthorized>
+                <MudButton Href="/login">
+                    <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">Log in</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Login" Style="@($"color:{Colors.Shades.White};")" />
+                </MudButton>
+			</NotAuthorized>
+        </AuthorizeView>
+
         <MudMenu Icon="@Icons.Material.Filled.Home" Color="Color.Inherit">
             <MudMenuItem Href="/">Home</MudMenuItem>
             <MudMenuItem Href="/weather">Cart</MudMenuItem>
@@ -139,6 +159,27 @@
         }
         _drawerOpen = !_drawerOpen;
     }
+
+    private async Task OpenLogoutDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<LogoutDialog>();
+        var result = await dialog.Result;
+
+        if (!result.Canceled) HandleLogout();
+   //TODO: Enable snackbar notification on logout
+   //      Snackbar.Add("Logged out.", Severity.Info, (options) =>
+   //      {
+   //          options.SnackbarTypeClass = Defaults.Classes.Position.TopRight;
+			// options.CloseAfterNavigation = true;
+   //      });
+    }
+
+    private void HandleLogout()
+    {
+        AuthStateProvider.Logout();
+        NavigationManager.NavigateTo("/");
+    }
 }
 
 <style>
@@ -149,10 +190,20 @@
         height: 300px;
     }
 
-        .hero-banner .overlay {
-            background-color: rgba(255, 255, 255, 0.5); /* light overlay */
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
+    .hero-banner .overlay {
+        background-color: rgba(255, 255, 255, 0.5); /* light overlay */
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .centered-title {
+		position: absolute;
+		left: 50%;
+		right: 50%;
+		transform: translateX(-50%);
+		inline-size: max-content;
+        z-index: 1;
+	}
+
 </style>

@@ -6,6 +6,7 @@ namespace Client.Authorization
     {
         private readonly HttpClient _http;
         private const string Endpoint = "api/Auth";
+        public static string Username = String.Empty;
 
         public AuthService(HttpClient http)
         {
