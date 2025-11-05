@@ -11,5 +11,6 @@ namespace Server.Services
         Task<TokenResponseDTO?> RefreshTokensAsync(Guid userId, string refreshToken);
         void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context);
         Guid GetUserIdFromClaims(ClaimsPrincipal user);
+        void DeleteCookies(HttpContext httpContext);
     }
 }

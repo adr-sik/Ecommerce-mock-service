@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Azure;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Data;
@@ -14,6 +16,27 @@ namespace Server.Services
 {
     public class AuthService(EcommerceContext context, IConfiguration configuration) : IAuthService
     {
+        private static readonly int AccessTokenExpiryTime = 15; // minutes
+        private static readonly int RefreshTokenExpiryTime = 7; // days
+
+        private static readonly CookieOptions AccessCookieOptions  = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/Auth",
+            Expires = DateTimeOffset.Now.AddMinutes(AccessTokenExpiryTime)
+        };
+
+        private static readonly CookieOptions RefreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/Auth/refresh-token",
+            Expires = DateTimeOffset.Now.AddDays(RefreshTokenExpiryTime)
+        };
+
         public async Task<TokenResponseDTO?> LoginAsync(UserDTO request)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
@@ -70,7 +93,7 @@ namespace Server.Services
         {
             var refreshToken = GenerateRefreshToken();
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(RefreshTokenExpiryTime);
             await context.SaveChangesAsync();
             return refreshToken;
         }
@@ -105,7 +128,7 @@ namespace Server.Services
                 issuer: configuration.GetValue<string>("Jwt:Issuer"),
                 audience: configuration.GetValue<string>("Jwt:Audience"),
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(15),
+                expires: DateTime.Now.AddMinutes(AccessTokenExpiryTime),
                 signingCredentials: creds
                 );
 
@@ -114,20 +137,13 @@ namespace Server.Services
 
         public void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context)
         {
-            context.Response.Cookies.Append("AccessToken", tokens.AccessToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.Now.AddMinutes(15)
-            });
-            context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.Now.AddDays(7)
-            });
+            context.Response.Cookies.Append("AccessToken", tokens.AccessToken, AccessCookieOptions);
+            context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, RefreshCookieOptions);
+        }
+        public void DeleteCookies(HttpContext context)
+        {
+            context.Response.Cookies.Delete("AccessToken", AccessCookieOptions);
+            context.Response.Cookies.Delete("RefreshToken", RefreshCookieOptions);
         }
     }
 }

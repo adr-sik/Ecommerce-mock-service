@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
 using Server.Services;
@@ -55,6 +56,24 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult AuthenticatedOnlyEndpoint()
         {
+            string acv = Request.Cookies["AccessToken"] ?? "no token";
+            Console.WriteLine("User is authenticated.");
+            Console.WriteLine($"Username: {User.Identity?.Name}");
+            if (string.IsNullOrEmpty(acv))  
+            {
+                Console.WriteLine("no token");
+            }
+            else
+            {
+                var expiryClaim = User.Claims.FirstOrDefault(c => c.Type == "exp");
+                if (expiryClaim != null && long.TryParse(expiryClaim.Value, out long expValue))
+                {
+                    var expiryDateTime = DateTimeOffset.FromUnixTimeSeconds(expValue);
+                    Console.WriteLine($"Token Expiry Time: {expiryDateTime.LocalDateTime} and time now: {DateTime.Now}");
+                }
+                Console.WriteLine($"AccessToken value: { acv }");
+            }
+                
             return Ok("You are authenticated!");
         }
 
@@ -88,8 +107,7 @@ namespace Server.Controllers
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("accessToken");
-            Response.Cookies.Delete("refreshToken");
+            authService.DeleteCookies(HttpContext);
 
             return Ok();
         }
