@@ -1,4 +1,5 @@
 ﻿using Shared.Models.DTOs;
+using System.Net.Http;
 
 namespace Client.Authorization
 {
@@ -15,7 +16,7 @@ namespace Client.Authorization
 
         public async Task<UserClaimsDTO?> LoginAsync(UserDTO user)
         {
-            var response = await _http.PostAsJsonAsync("api/auth/login", user);
+            var response = await _http.PostAsJsonAsync($"{Endpoint}/login", user);
 
             if (response.IsSuccessStatusCode)
             {
@@ -27,7 +28,7 @@ namespace Client.Authorization
 
         public async Task LogoutAsync()
         {
-            await _http.PostAsync("api/auth/logout", null);
+            await _http.PostAsync($"{Endpoint}/logout", null);
         }
 
         public async Task<bool> TestAuth()
@@ -52,13 +53,31 @@ namespace Client.Authorization
 
         public async Task<UserClaimsDTO> GetUserInfoAsync()
         {
-            var response = await _http.GetAsync("api/auth/userinfo");
+            Console.WriteLine("Getting user info...");
+            var response = await _http.GetAsync($"{Endpoint}/userinfo");
+            Console.WriteLine($"Success! User: {response?.ToString()}");
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<UserClaimsDTO>();
             }
 
             return null;
+        }
+
+        public async Task<bool> RefreshCookies()
+        {
+            Console.WriteLine($"Attempting token refresh at {DateTime.Now}");
+            try
+            {
+                var response = await _http.PostAsync($"{Endpoint}/refresh-token", null);
+                Console.WriteLine($"Refresh response: {response.StatusCode}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Refresh failed: {ex.Message}");
+                return false;
+            }
         }
     }
 }

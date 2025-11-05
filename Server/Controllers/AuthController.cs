@@ -35,20 +35,34 @@ namespace Server.Controllers
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDTO>> RefreshToken()
         {
+            var allCookies = string.Join(", ", Request.Cookies.Select(c => $"{c.Key}={c.Value?.Length ?? 0} chars"));
+            Console.WriteLine($"REFRESH ATTEMPT - All cookies: {allCookies}");
+
+            var hasAccess = Request.Cookies.TryGetValue("AccessToken", out var accessTokenTest);
+            var hasRefresh = Request.Cookies.TryGetValue("RefreshToken", out var refreshTokenTest);
+
+            Console.WriteLine($"AccessToken: {hasAccess}, RefreshToken: {hasRefresh}");
+
+            if (!hasRefresh || string.IsNullOrEmpty(refreshTokenTest))
+            {
+                Console.WriteLine($"❌ NO REFRESH TOKEN IN REQUEST");
+                return Unauthorized(new { error = "No refresh token" });
+            }
+
+            Console.WriteLine($"Refresh token from cookie: {refreshTokenTest}");
+
+            //
             var refreshToken = Request.Cookies["RefreshToken"];
             if (string.IsNullOrEmpty(refreshToken))
-                return BadRequest("Refresh token not found.");
+                return Unauthorized();
 
-            var userId = authService.GetUserIdFromClaims(User);
-            if (userId == Guid.Empty)
-                return BadRequest("Invalid or missing user.");
+            var tokenResponse = await authService.RefreshTokensAsync(refreshToken);
 
-            var tokenResponse = await authService.RefreshTokensAsync(userId, refreshToken);
-            if (tokenResponse == null || tokenResponse.AccessToken is null || tokenResponse.RefreshToken is null)
-                return Unauthorized("Session expired, please log in again.");
+            if (tokenResponse is null)
+                return Unauthorized();
 
             authService.SetTokensInsideCookie(tokenResponse, HttpContext);
-
+            Console.WriteLine($"Tokens refreshed and set in cookies. {tokenResponse.RefreshToken} \n {tokenResponse.AccessToken}");
             return Ok();
         }
 

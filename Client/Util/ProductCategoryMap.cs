@@ -2,7 +2,7 @@
 using Shared.Models.DTOs.ProductTypesDTOs;
 using Shared.Models.Filters;
 
-namespace Client.Components.Util
+namespace Client.Util
 {
     // Maps string values to concrete types
     public static class ProductCategoryMap

@@ -29,7 +29,7 @@
         <AuthorizeView>
             <Authorized>
                 <MudButton Href="/user">
-                    <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">@AuthStateProvider.DisplayName</MudText>
+                    <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">@context.User.Identity.Name</MudText>
                     <MudIcon Icon="@Icons.Material.Outlined.Person" Style="@($"color:{Colors.Shades.White};")" />
                 </MudButton>
                 <MudIconButton onclick="OpenLogoutDialogAsync" Icon="@Icons.Material.Filled.Logout" Style="@($"color:{Colors.Shades.White};")" />
@@ -120,10 +120,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await AuthStateProvider.CheckAuthenticationAsync();
         NavigationManager.LocationChanged += OnLocationChanged;
         FilterStateService.OnChange += OnFilterStateChanged;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthStateProvider.CheckAuthenticationAsync();
+            StateHasChanged();
+        }
+	}
 
     private void OnLocationChanged(object sender, LocationChangedEventArgs e)
     {
@@ -167,12 +175,6 @@
         var result = await dialog.Result;
 
         if (!result.Canceled) HandleLogout();
-   //TODO: Enable snackbar notification on logout
-   //      Snackbar.Add("Logged out.", Severity.Info, (options) =>
-   //      {
-   //          options.SnackbarTypeClass = Defaults.Classes.Position.TopRight;
-			// options.CloseAfterNavigation = true;
-   //      });
     }
 
     private void HandleLogout()

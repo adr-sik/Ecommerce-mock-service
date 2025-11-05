@@ -38,6 +38,8 @@
 <div></div>
 <MudButton OnClick="TestAdmin">@admin</MudButton>
 <div></div>
+<MudButton OnClick="TestRefresh">@refresh</MudButton>
+<div></div>
 
 <AuthorizeView>
     <Authorized>
@@ -54,6 +56,7 @@
     string test = "test";
     string auth = "auth";
     string admin = "admin";
+    bool refresh = false;
 
     public class RegisterAccountForm
     {
@@ -77,11 +80,10 @@
 
         if (userClaims != null)
         {
-            AuthStateProvider.Login(userClaims);
+			AuthStateProvider.Login(userClaims);
 
             success = true;
             test = "Login successful!";
-            NavigationManager.NavigateTo("/");
         }
         else
         {
@@ -104,6 +106,14 @@
         var authService = ServiceProvider.GetRequiredService<AuthService>();
         var isAuth = await authService.TestAdmin();
         admin = isAuth ? "User is an admin" : "User is NOT an admin";
+        StateHasChanged();
+    }
+
+    private async Task TestRefresh()
+    {
+        var authService = ServiceProvider.GetRequiredService<AuthService>();
+        var isAuth = await authService.RefreshCookies();
+        refresh = isAuth;
         StateHasChanged();
     }
 }

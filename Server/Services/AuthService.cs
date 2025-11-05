@@ -19,22 +19,20 @@ namespace Server.Services
         private static readonly int AccessTokenExpiryTime = 15; // minutes
         private static readonly int RefreshTokenExpiryTime = 7; // days
 
-        private static readonly CookieOptions AccessCookieOptions  = new CookieOptions
+        private static CookieOptions GetBaseAccessCookieOptions() => new()
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Lax,
-            Path = "/api/Auth",
-            Expires = DateTimeOffset.Now.AddMinutes(AccessTokenExpiryTime)
+            Path = "/api/Auth"
         };
 
-        private static readonly CookieOptions RefreshCookieOptions = new CookieOptions
+        private static CookieOptions GetBaseRefreshCookieOptions() => new()
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Lax,
-            Path = "/api/Auth/refresh-token",
-            Expires = DateTimeOffset.Now.AddDays(RefreshTokenExpiryTime)
+            Path = "/api/Auth/refresh-token"
         };
 
         public async Task<TokenResponseDTO?> LoginAsync(UserDTO request)
@@ -52,9 +50,9 @@ namespace Server.Services
             return await CreateTokenResponse(user);
         }
 
-        public async Task<TokenResponseDTO?> RefreshTokensAsync(Guid userId, string refreshToken)
+        public async Task<TokenResponseDTO?> RefreshTokensAsync(string refreshToken)
         {
-            var user = await ValidateRefreshTokenAsync(userId, refreshToken);
+            var user = await ValidateRefreshTokenAsync(refreshToken);
             if (user is null)
                 return null;
 
@@ -70,11 +68,18 @@ namespace Server.Services
             };
         }
 
-        private async Task<User?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
+        private async Task<User?> ValidateRefreshTokenAsync(string refreshToken)
         {
-            var user = await context.Users.FindAsync(userId);
-            if (user is null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            var user = await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            if (user is null)
             {
+                return null;
+            }
+
+            if (user.RefreshTokenExpiryTime <= DateTime.Now)
+            {
+                user.RefreshToken = null;
+                await context.SaveChangesAsync();
                 return null;
             }
 
@@ -137,13 +142,21 @@ namespace Server.Services
 
         public void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context)
         {
-            context.Response.Cookies.Append("AccessToken", tokens.AccessToken, AccessCookieOptions);
-            context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, RefreshCookieOptions);
+            var accessOptions = GetBaseAccessCookieOptions();
+            accessOptions.Expires = DateTimeOffset.Now.AddMinutes(AccessTokenExpiryTime);
+            context.Response.Cookies.Append("AccessToken", tokens.AccessToken, accessOptions);
+
+            var refreshOptions = GetBaseRefreshCookieOptions();
+            refreshOptions.Expires = DateTimeOffset.Now.AddDays(RefreshTokenExpiryTime);
+            context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, refreshOptions);
         }
         public void DeleteCookies(HttpContext context)
         {
-            context.Response.Cookies.Delete("AccessToken", AccessCookieOptions);
-            context.Response.Cookies.Delete("RefreshToken", RefreshCookieOptions);
+            var accessDeleteOptions = GetBaseAccessCookieOptions();
+            context.Response.Cookies.Delete("AccessToken", accessDeleteOptions);
+
+            var refreshDeleteOptions = GetBaseRefreshCookieOptions();
+            context.Response.Cookies.Delete("RefreshToken", refreshDeleteOptions);
         }
     }
 }

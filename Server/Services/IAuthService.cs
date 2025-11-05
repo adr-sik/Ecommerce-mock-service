@@ -8,7 +8,7 @@ namespace Server.Services
     public interface IAuthService
     {
         Task<TokenResponseDTO?> LoginAsync(UserDTO request);
-        Task<TokenResponseDTO?> RefreshTokensAsync(Guid userId, string refreshToken);
+        Task<TokenResponseDTO?> RefreshTokensAsync(string refreshToken);
         void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context);
         Guid GetUserIdFromClaims(ClaimsPrincipal user);
         void DeleteCookies(HttpContext httpContext);

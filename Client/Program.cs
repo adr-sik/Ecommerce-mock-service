@@ -1,13 +1,11 @@
 using Client.Authorization;
 using Client.Components;
 using Client.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using MudBlazor.Services;
 using Shared.Models.DTOs;
 using Shared.Models.DTOs.ProductTypesDTOs;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -33,6 +31,8 @@ namespace Client
             jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             jsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
             builder.Services.AddSingleton(jsonSerializerOptions);
+
+            builder.Services.AddSingleton<CookieContainer>();
 
             var apiUrl = new Uri(builder.Configuration["ApiUrl"]!);
 
@@ -79,10 +79,27 @@ namespace Client
         private static void AddApiService<TService>(WebApplicationBuilder builder, Uri apiUrl) where TService : class
         {
             Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
+
             builder.Services.AddHttpClient<TService>(client =>
             {
                 client.BaseAddress = apiUrl;
+            })
+            .ConfigurePrimaryHttpMessageHandler(sp =>
+            {
+                var cookieContainer = sp.GetRequiredService<CookieContainer>();
+
+                return new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer // Shared across all requests
+                };
             });
+
+            //Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
+            //builder.Services.AddHttpClient<TService>(client =>
+            //{
+            //    client.BaseAddress = apiUrl;
+            //});
         }
     }
 }

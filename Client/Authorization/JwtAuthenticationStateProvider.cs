@@ -24,21 +24,16 @@ namespace Client.Authorization
 
         public async Task<bool> CheckAuthenticationAsync()
         {
-            try
-            {
-                var userClaims = await _authService.GetUserInfoAsync();
 
-                if (userClaims != null)
-                {
-                    Login(userClaims);
-                    return true;
-                }
-            }
-            catch (HttpRequestException)
-            {
+            var userClaims = await _authService.GetUserInfoAsync();
 
+            if (userClaims != null)
+            {
+                Login(userClaims);
+                return true;
             }
-            Logout();
+
+            LocalLogout();
             return false;
         }
 
@@ -55,6 +50,12 @@ namespace Client.Authorization
         {
             await _authService.LogoutAsync();
 
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
+        }
+
+        public void LocalLogout()
+        {
             _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
         }

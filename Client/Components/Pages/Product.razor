@@ -1,10 +1,10 @@
 ﻿@page "/products/{Category}/{ProductId:int}/{ProductSlug?}"
-@using Humanizer
-@using Shared.Models.DTOs.ProductTypesDTOs
-@using Shared.Models.DTOs
-@using Services
-@using Client.Components.Util
 @using System.Reflection
+@using Client.Util
+@using Humanizer
+@using Services
+@using Shared.Models.DTOs
+@using Shared.Models.DTOs.ProductTypesDTOs
 @inject NavigationManager NavigationManager
 @inject IServiceProvider ServiceProvider
 @inject FilterStateService FilterStateService
