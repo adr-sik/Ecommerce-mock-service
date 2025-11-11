@@ -79,7 +79,14 @@ namespace Server.Services
             if (user.RefreshTokenExpiryTime <= DateTime.Now)
             {
                 user.RefreshToken = null;
-                await context.SaveChangesAsync();
+                try
+                {
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateException ex)
+                {
+                    Console.WriteLine($"Error revoking expired refresh token in DB: {ex.Message}");
+                }
                 return null;
             }
 
@@ -98,7 +105,7 @@ namespace Server.Services
         {
             var refreshToken = GenerateRefreshToken();
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(RefreshTokenExpiryTime);
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(RefreshTokenExpiryTime); // test
             await context.SaveChangesAsync();
             return refreshToken;
         }

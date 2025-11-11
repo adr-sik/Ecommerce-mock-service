@@ -16,9 +16,9 @@ namespace Client.Services
 
         protected abstract string Endpoint { get; }
 
-        protected ServiceBase(HttpClient http, JsonSerializerOptions jsonOptions)
+        protected ServiceBase(IHttpClientFactory http, JsonSerializerOptions jsonOptions)
         {
-            _http = http;
+            _http = http.CreateClient("WebAPI");
             _jsonOptions = jsonOptions;
         }
 

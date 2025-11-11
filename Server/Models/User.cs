@@ -16,7 +16,7 @@ namespace Server.Models
         public User? Referral { get; set; }
         public ICollection<Order> Orders { get; set; } = new List<Order>();
         public string Role { get; set; } = String.Empty; // TODO: Change Role to enum
-        public string RefreshToken { get; set; } = String.Empty;
+        public string? RefreshToken { get; set; } = String.Empty;
         public DateTime? RefreshTokenExpiryTime { get; set; }        
     }
 }

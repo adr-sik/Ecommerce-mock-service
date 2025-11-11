@@ -34,7 +34,7 @@ namespace Server
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("https://localhost:7030") // your client app URL
+                    policy.WithOrigins("https://localhost:7067") // your client app URL
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

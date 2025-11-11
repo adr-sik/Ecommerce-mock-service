@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Humanizer;
 using Shared.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using AutoMapper;
 
 namespace Client.Services
@@ -11,7 +10,7 @@ namespace Client.Services
     public class ProductService<T> : ServiceBase<T>, IProductService where T : ProductDTO
     {
         protected override string Endpoint => $"api/products/{typeof(T).Name.ToLowerInvariant().Replace("dto", "").Pluralize()}";
-        public ProductService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
+        public ProductService(IHttpClientFactory httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
 
         // Utilizing methods from base class
 

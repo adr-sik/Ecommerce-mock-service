@@ -1,4 +1,5 @@
 ﻿using Shared.Models.DTOs;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Client.Services
@@ -6,7 +7,7 @@ namespace Client.Services
     public class UserService : ServiceBase<UserDTO>
     {
         protected override string Endpoint => "api/users";
-        public UserService(HttpClient httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
+        public UserService(IHttpClientFactory httpClient, JsonSerializerOptions jsonOptions) : base(httpClient, jsonOptions) { }
 
         // Register a new user
         public async Task<bool> RegisterAsync(UserDTO user)

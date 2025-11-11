@@ -1,22 +1,26 @@
 ﻿using Shared.Models.DTOs;
 using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace Client.Authorization
 {
     public partial class AuthService
     {
-        private readonly HttpClient _http;
         private const string Endpoint = "api/Auth";
         public static string Username = String.Empty;
 
-        public AuthService(HttpClient http)
+        private readonly HttpClient _httpClient;
+        private readonly HttpClient _refreshClient;
+
+        public AuthService(IHttpClientFactory factory) 
         {
-            _http = http;
+            _httpClient = factory.CreateClient("WebAPI");
+            _refreshClient = factory.CreateClient("RefreshClient"); 
         }
 
         public async Task<UserClaimsDTO?> LoginAsync(UserDTO user)
         {
-            var response = await _http.PostAsJsonAsync($"{Endpoint}/login", user);
+            var response = await _httpClient.PostAsJsonAsync($"{Endpoint}/login", user);
 
             if (response.IsSuccessStatusCode)
             {
@@ -28,12 +32,12 @@ namespace Client.Authorization
 
         public async Task LogoutAsync()
         {
-            await _http.PostAsync($"{Endpoint}/logout", null);
+            await _httpClient.PostAsync($"{Endpoint}/logout", null);
         }
 
         public async Task<bool> TestAuth()
         {
-            var response = await _http.GetAsync($"{Endpoint}");
+            var response = await _httpClient.GetAsync($"{Endpoint}");
             if (response.IsSuccessStatusCode)
             {
                 return true;
@@ -43,7 +47,7 @@ namespace Client.Authorization
 
         public async Task<bool> TestAdmin()
         {
-            var response = await _http.GetAsync($"{Endpoint}/admin-only");
+            var response = await _httpClient.GetAsync($"{Endpoint}/admin-only");
             if (response.IsSuccessStatusCode)
             {
                 return true;
@@ -54,7 +58,7 @@ namespace Client.Authorization
         public async Task<UserClaimsDTO> GetUserInfoAsync()
         {
             Console.WriteLine("Getting user info...");
-            var response = await _http.GetAsync($"{Endpoint}/userinfo");
+            var response = await _httpClient.GetAsync($"{Endpoint}/userinfo");
             Console.WriteLine($"Success! User: {response?.ToString()}");
             if (response.IsSuccessStatusCode)
             {
@@ -69,7 +73,7 @@ namespace Client.Authorization
             Console.WriteLine($"Attempting token refresh at {DateTime.Now}");
             try
             {
-                var response = await _http.PostAsync($"{Endpoint}/refresh-token", null);
+                var response = await _refreshClient.PostAsync($"{Endpoint}/refresh-token", null);
                 Console.WriteLine($"Refresh response: {response.StatusCode}");
                 return response.IsSuccessStatusCode;
             }

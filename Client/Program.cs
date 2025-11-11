@@ -1,15 +1,18 @@
 using Client.Authorization;
-using Client.Components;
 using Client.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
+using Polly;
 using Shared.Models.DTOs;
 using Shared.Models.DTOs.ProductTypesDTOs;
+using System;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Client
 {
@@ -17,12 +20,13 @@ namespace Client
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebAssemblyHostBuilder.CreateDefault(args);
+            builder.RootComponents.Add<App>("#app");
+            builder.RootComponents.Add<HeadOutlet>("head::after");
+
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
             builder.Services.AddMudServices();
-
-            builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
 
             var jsonSerializerOptions = new JsonSerializerOptions
             {
@@ -32,74 +36,42 @@ namespace Client
             jsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
             builder.Services.AddSingleton(jsonSerializerOptions);
 
-            builder.Services.AddSingleton<CookieContainer>();
-
             var apiUrl = new Uri(builder.Configuration["ApiUrl"]!);
 
-            AddApiService<ProductService<ProductDTO>>(builder, apiUrl);
-            AddApiService<ProductService<LaptopDTO>>(builder, apiUrl);
-            AddApiService<ProductService<PhoneDTO>>(builder, apiUrl);
-            AddApiService<ProductService<HeadphonesDTO>>(builder, apiUrl);
-            AddApiService<UserService>(builder, apiUrl);
-            AddApiService<AuthService>(builder, apiUrl);
+            builder.Services.AddScoped<ProductService<ProductDTO>>();
+            builder.Services.AddScoped<ProductService<LaptopDTO>>();
+            builder.Services.AddScoped<ProductService<PhoneDTO>>();
+            builder.Services.AddScoped<ProductService<HeadphonesDTO>>();
 
+            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<FilterStateService>();
 
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddAuthorization();
-
+            builder.Services.AddAuthorizationCore();
             builder.Services.AddScoped<JwtAuthenticationStateProvider>();
             builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
-            builder.Services.AddCascadingAuthenticationState();
 
-            var app = builder.Build();
+            builder.Services.AddTransient<CookieForwardingHandler>();
 
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseStaticFiles();
-            app.UseAntiforgery();
-
-            app.MapRazorComponents<App>()
-                .AddInteractiveServerRenderMode();
-
-            app.UseStatusCodePagesWithRedirects("/StatusCode/{0}");
-
-            app.Run();
-        }
-
-        // Service registraction helper
-        private static void AddApiService<TService>(WebApplicationBuilder builder, Uri apiUrl) where TService : class
-        {
-            Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
-
-            builder.Services.AddHttpClient<TService>(client =>
-            {
-                client.BaseAddress = apiUrl;
-            })
-            .ConfigurePrimaryHttpMessageHandler(sp =>
-            {
-                var cookieContainer = sp.GetRequiredService<CookieContainer>();
-
-                return new HttpClientHandler
+            builder.Services.AddHttpClient("WebAPI", client => client.BaseAddress = apiUrl)
+                .AddHttpMessageHandler<CookieForwardingHandler>()
+                .AddPolicyHandler((serviceProvider, request) =>
                 {
-                    UseCookies = true,
-                    CookieContainer = cookieContainer // Shared across all requests
-                };
-            });
+                    var policy = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Unauthorized)
+                        .RetryAsync(1, async (result, retryCount, context) =>
+                        {
+                            var authService = serviceProvider.GetRequiredService<AuthService>();
+                            await authService.RefreshCookies();
+                        });
 
-            //Console.WriteLine($"Registering {typeof(TService).Name} with base URL {apiUrl}");
-            //builder.Services.AddHttpClient<TService>(client =>
-            //{
-            //    client.BaseAddress = apiUrl;
-            //});
+                    return policy;
+                });
+
+            builder.Services.AddHttpClient("RefreshClient", client => client.BaseAddress = apiUrl)
+                .AddHttpMessageHandler<CookieForwardingHandler>();
+
+
+            await builder.Build().RunAsync();
         }
     }
 }

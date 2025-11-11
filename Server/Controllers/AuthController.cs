@@ -35,23 +35,6 @@ namespace Server.Controllers
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDTO>> RefreshToken()
         {
-            var allCookies = string.Join(", ", Request.Cookies.Select(c => $"{c.Key}={c.Value?.Length ?? 0} chars"));
-            Console.WriteLine($"REFRESH ATTEMPT - All cookies: {allCookies}");
-
-            var hasAccess = Request.Cookies.TryGetValue("AccessToken", out var accessTokenTest);
-            var hasRefresh = Request.Cookies.TryGetValue("RefreshToken", out var refreshTokenTest);
-
-            Console.WriteLine($"AccessToken: {hasAccess}, RefreshToken: {hasRefresh}");
-
-            if (!hasRefresh || string.IsNullOrEmpty(refreshTokenTest))
-            {
-                Console.WriteLine($"❌ NO REFRESH TOKEN IN REQUEST");
-                return Unauthorized(new { error = "No refresh token" });
-            }
-
-            Console.WriteLine($"Refresh token from cookie: {refreshTokenTest}");
-
-            //
             var refreshToken = Request.Cookies["RefreshToken"];
             if (string.IsNullOrEmpty(refreshToken))
                 return Unauthorized();
