@@ -1,4 +1,6 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,17 +10,29 @@ using Server.Models;
 using Shared.Models;
 using Shared.Models.DTOs;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Server.Services
 {
-    public class AuthService(EcommerceContext context, IConfiguration configuration) : IAuthService
+    public class AuthService : IAuthService
     {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
+        private readonly EcommerceContext _dbContext;
+
         private static readonly int AccessTokenExpiryTime = 15; // minutes
         private static readonly int RefreshTokenExpiryTime = 7; // days
 
+        public AuthService(EcommerceContext dbContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        {
+            _dbContext = dbContext;
+            _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
+        }
+            
         private static CookieOptions GetBaseAccessCookieOptions() => new()
         {
             HttpOnly = true,
@@ -37,7 +51,7 @@ namespace Server.Services
 
         public async Task<TokenResponseDTO?> LoginAsync(UserDTO request)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
             if (user is null)
             {
                 return null;
@@ -61,6 +75,8 @@ namespace Server.Services
 
         private async Task<TokenResponseDTO> CreateTokenResponse(User? user)
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+
             return new TokenResponseDTO
             {
                 AccessToken = CreateToken(user),
@@ -70,7 +86,7 @@ namespace Server.Services
 
         private async Task<User?> ValidateRefreshTokenAsync(string refreshToken)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
             if (user is null)
             {
                 return null;
@@ -81,7 +97,7 @@ namespace Server.Services
                 user.RefreshToken = null;
                 try
                 {
-                    await context.SaveChangesAsync();
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (DbUpdateException ex)
                 {
@@ -106,7 +122,7 @@ namespace Server.Services
             var refreshToken = GenerateRefreshToken();
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.Now.AddDays(RefreshTokenExpiryTime); // test
-            await context.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync();
             return refreshToken;
         }
 
@@ -132,13 +148,13 @@ namespace Server.Services
             };
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Token")!));
+                Encoding.UTF8.GetBytes(_configuration.GetValue<string>("Jwt:Token")!));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var tokenDescriptor = new JwtSecurityToken(
-                issuer: configuration.GetValue<string>("Jwt:Issuer"),
-                audience: configuration.GetValue<string>("Jwt:Audience"),
+                issuer: _configuration.GetValue<string>("Jwt:Issuer"),
+                audience: _configuration.GetValue<string>("Jwt:Audience"),
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(AccessTokenExpiryTime),
                 signingCredentials: creds
@@ -147,23 +163,27 @@ namespace Server.Services
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
 
-        public void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context)
+        public void SetTokensInsideCookie(TokenResponseDTO tokens)
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+
             var accessOptions = GetBaseAccessCookieOptions();
             accessOptions.Expires = DateTimeOffset.Now.AddMinutes(AccessTokenExpiryTime);
-            context.Response.Cookies.Append("AccessToken", tokens.AccessToken, accessOptions);
+            httpContext.Response.Cookies.Append("AccessToken", tokens.AccessToken, accessOptions);
 
             var refreshOptions = GetBaseRefreshCookieOptions();
             refreshOptions.Expires = DateTimeOffset.Now.AddDays(RefreshTokenExpiryTime);
-            context.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, refreshOptions);
+            httpContext.Response.Cookies.Append("RefreshToken", tokens.RefreshToken, refreshOptions);
         }
-        public void DeleteCookies(HttpContext context)
+        public void DeleteCookies()
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+
             var accessDeleteOptions = GetBaseAccessCookieOptions();
-            context.Response.Cookies.Delete("AccessToken", accessDeleteOptions);
+            httpContext.Response.Cookies.Delete("AccessToken", accessDeleteOptions);
 
             var refreshDeleteOptions = GetBaseRefreshCookieOptions();
-            context.Response.Cookies.Delete("RefreshToken", refreshDeleteOptions);
+            httpContext.Response.Cookies.Delete("RefreshToken", refreshDeleteOptions);
         }
     }
 }

@@ -9,8 +9,8 @@ namespace Server.Services
     {
         Task<TokenResponseDTO?> LoginAsync(UserDTO request);
         Task<TokenResponseDTO?> RefreshTokensAsync(string refreshToken);
-        void SetTokensInsideCookie(TokenResponseDTO tokens, HttpContext context);
+        void SetTokensInsideCookie(TokenResponseDTO tokens);
         Guid GetUserIdFromClaims(ClaimsPrincipal user);
-        void DeleteCookies(HttpContext httpContext);
+        void DeleteCookies();
     }
 }

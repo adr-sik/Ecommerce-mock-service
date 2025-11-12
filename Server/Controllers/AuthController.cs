@@ -1,4 +1,5 @@
 ﻿using Azure.Core;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
@@ -11,18 +12,24 @@ namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController(IAuthService authService) : Controller
+    public class AuthController : Controller
     {
+        private readonly IAuthService _authService;
         public static User user = new();
+
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
 
         [HttpPost("login")]
         public async Task<ActionResult> Login(UserDTO request)
         {
-            var tokenResponse = await authService.LoginAsync(request);
+            var tokenResponse = await _authService.LoginAsync(request);
             if (tokenResponse == null)
                 return BadRequest("Invalid username or password.");
 
-            authService.SetTokensInsideCookie(tokenResponse, HttpContext);
+            _authService.SetTokensInsideCookie(tokenResponse);
             var principal = JwtSerialize.Deserialize(tokenResponse.AccessToken!);
 
             return Ok(new
@@ -33,20 +40,29 @@ namespace Server.Controllers
         }
 
         [HttpPost("refresh-token")]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult<TokenResponseDTO>> RefreshToken()
         {
-            var refreshToken = Request.Cookies["RefreshToken"];
-            if (string.IsNullOrEmpty(refreshToken))
-                return Unauthorized();
+            try
+            {
+                var refreshToken = Request.Cookies["RefreshToken"];
+                if (string.IsNullOrEmpty(refreshToken))
+                    return Unauthorized();
 
-            var tokenResponse = await authService.RefreshTokensAsync(refreshToken);
+                var tokenResponse = await _authService.RefreshTokensAsync(refreshToken);
 
-            if (tokenResponse is null)
-                return Unauthorized();
+                if (tokenResponse is null)
+                    return Unauthorized();
 
-            authService.SetTokensInsideCookie(tokenResponse, HttpContext);
-            Console.WriteLine($"Tokens refreshed and set in cookies. {tokenResponse.RefreshToken} \n {tokenResponse.AccessToken}");
-            return Ok();
+                _authService.SetTokensInsideCookie(tokenResponse);
+                Console.WriteLine($"Tokens refreshed and set in cookies. {tokenResponse.RefreshToken} \n {tokenResponse.AccessToken}");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return BadRequest(ex.ToString());
+            }
         }
 
         [Authorize]
@@ -104,7 +120,7 @@ namespace Server.Controllers
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            authService.DeleteCookies(HttpContext);
+            _authService.DeleteCookies();
 
             return Ok();
         }

@@ -7,6 +7,7 @@ using Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace Server
 {
@@ -21,11 +22,11 @@ namespace Server
             builder.Services.AddDbContext<EcommerceContext>(options =>
                 options.UseSqlServer(connectionString));
 
-            builder.Services.AddControllers()
-                    .AddJsonOptions(options =>
-                    {
-                        options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
-                    });
+            builder.Services.AddControllersWithViews()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+                });
 
             builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 
@@ -43,6 +44,7 @@ namespace Server
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddOpenApi();
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -72,6 +74,12 @@ namespace Server
                     };
                 });
 
+            builder.Services.AddAntiforgery(options =>
+            {
+                options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
+                options.SuppressXFrameOptionsHeader = false;
+            });
+
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUsersService, UsersService>();
 
@@ -94,12 +102,24 @@ namespace Server
                 }
             }
 
+            app.UseRouting();
             app.UseHttpsRedirection();
 
             app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseAntiforgery();
+            var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
+            app.Use((context, next) =>
+            {
+               
+                var tokens = antiforgery.GetAndStoreTokens(context);
+                context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!, new CookieOptions() { HttpOnly = false });
+                
+                return next(context);
+            });
 
             app.MapControllers();
 
