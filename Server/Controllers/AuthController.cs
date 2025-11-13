@@ -23,6 +23,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("login")]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Login(UserDTO request)
         {
             var tokenResponse = await _authService.LoginAsync(request);
@@ -118,6 +119,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("logout")]
+        [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
             _authService.DeleteCookies();

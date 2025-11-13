@@ -2,28 +2,32 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using System.Net;
 
 namespace Client.Authorization
 {
     public class CookieForwardingHandler : DelegatingHandler
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<CookieForwardingHandler> _logger;
+        private readonly IJSRuntime _jsRuntime;
 
-        private readonly SemaphoreSlim _refreshSemaphore = new(1, 1);
-        private bool _isRefreshing = false;
-
-        public CookieForwardingHandler(ILogger<CookieForwardingHandler> logger, IServiceProvider serviceProvider)
+        public CookieForwardingHandler(ILogger<CookieForwardingHandler> logger, IJSRuntime jsRuntime)
         {
             _logger = logger;
-            _serviceProvider = serviceProvider;
+            _jsRuntime = jsRuntime;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-            request.Headers.Add("X-Requested-With", ["XMLHttpRequest"]);
+
+            var token = await _jsRuntime.InvokeAsync<string>("getCookie", "XSRF-TOKEN");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.Headers.Add("X-CSRF-TOKEN-HEADERNAME", token);
+            }
 
             _logger.LogInformation($"Sending request to: {request.RequestUri}");
             var response =  await base.SendAsync(request, cancellationToken);

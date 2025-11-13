@@ -11,6 +11,7 @@ namespace Server.Controllers
     public class UsersController(IUsersService usersService) : Controller
     {
         [HttpPost("register")]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult<User>> Register(UserDTO request)
         {
             var user = await usersService.RegisterAsync(request);

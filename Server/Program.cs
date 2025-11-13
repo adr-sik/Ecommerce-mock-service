@@ -35,7 +35,7 @@ namespace Server
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("https://localhost:7067") // your client app URL
+                    policy.WithOrigins("https://localhost:7067")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
@@ -76,6 +76,7 @@ namespace Server
 
             builder.Services.AddAntiforgery(options =>
             {
+                options.FormFieldName = "AntiforgeryFieldname";
                 options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
                 options.SuppressXFrameOptionsHeader = false;
             });
@@ -114,7 +115,8 @@ namespace Server
             var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
             app.Use((context, next) =>
             {
-               
+                var requestPath = context.Request.Path.Value;
+                          
                 var tokens = antiforgery.GetAndStoreTokens(context);
                 context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!, new CookieOptions() { HttpOnly = false });
                 
