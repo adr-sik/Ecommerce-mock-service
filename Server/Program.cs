@@ -77,7 +77,8 @@ namespace Server
             builder.Services.AddAntiforgery(options =>
             {
                 options.FormFieldName = "AntiforgeryFieldname";
-                options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
+                options.HeaderName = "X-CSRF";
+                options.Cookie.Name = "XSRF-COOKIE";
                 options.SuppressXFrameOptionsHeader = false;
             });
 
@@ -111,16 +112,15 @@ namespace Server
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseAntiforgery();
             var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
-            app.Use((context, next) =>
+            app.Use(next => ctx =>
             {
-                var requestPath = context.Request.Path.Value;
-                          
-                var tokens = antiforgery.GetAndStoreTokens(context);
-                context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!, new CookieOptions() { HttpOnly = false });
-                
-                return next(context);
+                var tokens = antiforgery.GetAndStoreTokens(ctx);
+
+                ctx.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
+                    new CookieOptions() { HttpOnly = false });
+
+                return next(ctx);
             });
 
             app.MapControllers();
