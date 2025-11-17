@@ -119,6 +119,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("logout")]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {

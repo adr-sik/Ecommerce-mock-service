@@ -53,6 +53,9 @@ namespace Client
 
             builder.Services.AddTransient<CookieForwardingHandler>();
 
+            //TODO : Optimize request handling 
+            
+            // General use client
             builder.Services.AddHttpClient("WebAPI", client => client.BaseAddress = apiUrl)
                 .AddHttpMessageHandler<CookieForwardingHandler>()
                 .AddPolicyHandler((serviceProvider, request) =>
@@ -61,12 +64,13 @@ namespace Client
                         .RetryAsync(1, async (result, retryCount, context) =>
                         {
                             var authService = serviceProvider.GetRequiredService<AuthService>();
-                            await authService.RefreshCookies();
+                            await authService.RefreshCookies();                           
                         });
 
                     return policy;
                 });
 
+            // Endpoint for refreshing authorization
             builder.Services.AddHttpClient("RefreshClient", client => client.BaseAddress = apiUrl)
                 .AddHttpMessageHandler<CookieForwardingHandler>();
 

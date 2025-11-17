@@ -26,7 +26,7 @@ namespace Client.Authorization
 
             if (!string.IsNullOrEmpty(token))
             {
-                request.Headers.Add("X-CSRF-TOKEN-HEADERNAME", token);
+                request.Headers.Add("X-CSRF", token);
             }
 
             _logger.LogInformation($"Sending request to: {request.RequestUri}");

@@ -104,8 +104,8 @@ namespace Server
                 }
             }
 
-            app.UseRouting();
             app.UseHttpsRedirection();
+            app.UseRouting();
 
             app.UseCors();
 
