@@ -1,36 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
 using Shared.Models;
 
-namespace Server.Controllers
+namespace Server.Services
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class OrdersController : ControllerBase
+    public class CartService
     {
-        private readonly EcommerceContext _dbContext;
+    private readonly EcommerceContext _dbContext;
 
-        public OrdersController(EcommerceContext context)
+        public CartService(EcommerceContext dbContext)
         {
-            _dbContext = context;
+            _dbContext = dbContext;
         }
 
-        [HttpPost("checkout")]
-        public async Task<ActionResult<decimal?>> ProcessOrder(List<CheckoutItemDTO> items)
-        {
-            var result = await ProceedToCheckout(items);
-
-            return result;
-        }
-
-        private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items)
+        public async Task<bool> ProceedToCheckout(List<CheckoutItemDTO> items)
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             decimal total = 0;
@@ -47,8 +31,7 @@ namespace Server.Controllers
 
                 foreach (var item in items)
                 {
-                    if (!productDictionary.TryGetValue(item.ProductId, out var product) 
-                        || product.Stock < item.Quantity || item.Quantity < 0)
+                    if (!productDictionary.TryGetValue(item.ProductId, out var product) || product.Stock < item.Quantity)
                     {
                         throw new InvalidOperationException($"Validation failed for product with Id: {item.ProductId}");
                     }
@@ -58,23 +41,23 @@ namespace Server.Controllers
                         : product.Price;
 
                     product.Stock -= item.Quantity;
-                    total += Math.Round(unitPrice, 2, MidpointRounding.AwayFromZero) * item.Quantity;
-                }
+                    total += unitPrice * item.Quantity;                                      
+              }
 
                 await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return total;
+                return true;
             }
             catch (DbUpdateConcurrencyException ex)
             {
                 // TODO: implement
                 await transaction.RollbackAsync();
-                return null;
+                return false;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return null;
+                return false;
             }
         }
     }

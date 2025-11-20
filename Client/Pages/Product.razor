@@ -22,17 +22,24 @@
         <meta property="og:url" content="@NavigationManager.Uri" />
     </HeadContent>
 
-    <h3>@product.Brand - @product.Model</h3>
-    <MudImage Src="@product.Images.First().Path" Alt="@ProductSlug"></MudImage>
-    if (product.Sale != null && product.Sale > 0)
-    {
-        <h3 style="color:red;">@product.Price</h3>
-        <h3 style="display:inline;">@product.GetPriceWithSale()</h3>
-    }
-    else
-    {
-        <h3>@product.Price</h3>
-    }
+    <MudStack Row="true" Breakpoint="Breakpoint.Xs">
+        <div>
+            <h3>@product.Brand - @product.Model</h3>
+            <MudImage Src="@product.Images.First().Path" Alt="@ProductSlug" Fluid="true"></MudImage>
+   
+            @if (product.Sale != null && product.Sale > 0)
+            {
+                <h3 style="color:red;">@product.Price</h3>
+                <h3 style="display:inline;">@product.GetPriceWithSale()</h3>
+            }
+            else
+            {
+                <h3>@product.Price</h3>
+            }
+        </div>
+    <MudIconButton Icon="@Icons.Material.Outlined.AddShoppingCart" OnClick="HandleAddToCart"></MudIconButton>
+    </MudStack>
+
     <table class="table">
         <tbody>
             @foreach (var property in GetPropertiesForDisplay())
@@ -91,13 +98,18 @@ else
         }
     }
 
-	// Get product properties excluding base product ones
+    // Get product properties excluding base product ones
     private IEnumerable<PropertyInfo> GetPropertiesForDisplay()
     {
         var ignoreProps = new[] { "Id", "Images", "Sale", "Description", "Model", "Brand", "Price"};
         var properties = product.GetType()
                                 .GetProperties()
                                 .Where(p => !ignoreProps.Contains(p.Name));
-		return properties;
+        return properties;
+    }
+
+    private void HandleAddToCart()
+    {
+        
     }
 }
