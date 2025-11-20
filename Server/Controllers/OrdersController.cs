@@ -30,7 +30,36 @@ namespace Server.Controllers
             return result;
         }
 
-        private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items)
+        [HttpPost("concurrency-test")]
+        public async Task<ActionResult<decimal?>> TestConcurrency(List<CheckoutItemDTO> items)
+        {
+            var result = await ProceedToCheckout(items, sleep:true);
+
+            return result;
+        }
+
+        private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items, int maxRetries = 3, bool sleep = false)
+        {
+            // retry in case of DbUpdateConcurrencyException
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    return await ExecuteCheckout(items, sleep);
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    if (attempt == maxRetries - 1)
+                    {
+                        throw new InvalidOperationException("Checkout failed due to concurrent updates. Please try again.", ex);
+                    }
+                    await Task.Delay(TimeSpan.FromMilliseconds(100 * Math.Pow(2, attempt)));
+                }
+            }
+            return null;
+        }
+
+        private async Task<decimal?> ExecuteCheckout(List<CheckoutItemDTO> items, bool sleep)
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             decimal total = 0;
@@ -38,7 +67,6 @@ namespace Server.Controllers
             try
             {
                 var itemIds = items.Select(item => item.ProductId).ToList();
-
                 var products = await _dbContext.Products
                     .Where(p => itemIds.Contains(p.Id))
                     .ToListAsync();
@@ -47,10 +75,19 @@ namespace Server.Controllers
 
                 foreach (var item in items)
                 {
-                    if (!productDictionary.TryGetValue(item.ProductId, out var product) 
-                        || product.Stock < item.Quantity || item.Quantity < 0)
+                    if (item.Quantity <= 0)
                     {
-                        throw new InvalidOperationException($"Validation failed for product with Id: {item.ProductId}");
+                        throw new InvalidOperationException($"Invalid quantity for product {item.ProductId}");
+                    }
+
+                    if (!productDictionary.TryGetValue(item.ProductId, out var product))
+                    {
+                        throw new InvalidOperationException($"Product not found: {item.ProductId}");
+                    }
+
+                    if (product.Stock < item.Quantity)
+                    {
+                        throw new InvalidOperationException($"Insufficient stock for product {item.ProductId}. Available: {product.Stock}, Requested: {item.Quantity}");
                     }
 
                     decimal unitPrice = product.Sale.HasValue
@@ -58,24 +95,23 @@ namespace Server.Controllers
                         : product.Price;
 
                     product.Stock -= item.Quantity;
-                    total += Math.Round(unitPrice, 2, MidpointRounding.AwayFromZero) * item.Quantity;
+
+                    decimal lineTotal = unitPrice * item.Quantity;
+                    total += Math.Round(lineTotal, 2, MidpointRounding.AwayFromZero);
                 }
+
+                // for concurrency testing
+                if (sleep == true) Thread.Sleep(5000);
 
                 await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return total;
             }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                // TODO: implement
-                await transaction.RollbackAsync();
-                return null;
-            }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
-                return null;
-            }
+                throw;
+            }       
         }
     }
 }
