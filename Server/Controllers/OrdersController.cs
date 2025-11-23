@@ -7,102 +7,131 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
+using Shared.Models;
 
 namespace Server.Controllers
 {
-    [Route("api/orders")]
+    [Route("api/[controller]")]
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly EcommerceContext _context;
+        private readonly EcommerceContext _dbContext;
 
         public OrdersController(EcommerceContext context)
         {
-            _context = context;
+            _dbContext = context;
         }
 
-        // GET: api/Orders
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        [HttpPost("checkout")]
+        public async Task<ActionResult<decimal?>> ProcessOrder(List<CheckoutItemDTO> items, Guid userId)
         {
-            return await _context.Orders.ToListAsync();
+            var result = await ProceedToCheckout(items, userId);
+
+            return result;
         }
 
-        // GET: api/Orders/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+        [HttpPost("concurrency-test")]
+        public async Task<ActionResult<decimal?>> TestConcurrency(List<CheckoutItemDTO> items, Guid userId)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var result = await ProceedToCheckout(items, userId, sleep:true);
 
-            if (order == null)
+            return result;
+        }
+
+        private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items, Guid userId, int maxRetries = 3, bool sleep = false)
+        {
+            // retry in case of DbUpdateConcurrencyException
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                return NotFound();
+                try
+                {
+                    return await ExecuteCheckout(items, userId, sleep);
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    if (attempt == maxRetries - 1)
+                    {
+                        throw new InvalidOperationException("Checkout failed due to concurrent updates. Please try again.", ex);
+                    }
+                    await Task.Delay(TimeSpan.FromMilliseconds(100 * Math.Pow(2, attempt)));
+                }
             }
-
-            return order;
+            return null;
         }
 
-        // PUT: api/Orders/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
+        private async Task<decimal?> ExecuteCheckout(List<CheckoutItemDTO> items, Guid userId, bool sleep)
         {
-            if (id != order.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(order).State = EntityState.Modified;
+            _dbContext.ChangeTracker.Clear();
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            decimal total = 0;
 
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderExists(id))
+                var itemIds = items.Select(item => item.ProductId).ToList();
+                var products = await _dbContext.Products
+                    .Where(p => itemIds.Contains(p.Id))
+                    .ToListAsync();
+
+                var productDictionary = products.ToDictionary(p => p.Id);
+
+                var newOrder = new Order
                 {
-                    return NotFound();
-                }
-                else
+                    UserId = userId,
+                    Created = DateTime.UtcNow,
+                    OrderProducts = new List<OrderProduct>()
+                };
+
+                foreach (var item in items)
                 {
-                    throw;
+                    if (item.Quantity <= 0)
+                    {
+                        throw new InvalidOperationException($"Invalid quantity for product {item.ProductId}");
+                    }
+
+                    if (!productDictionary.TryGetValue(item.ProductId, out var product))
+                    {
+                        throw new InvalidOperationException($"Product not found: {item.ProductId}");
+                    }
+
+                    if (product.Stock < item.Quantity)
+                    {
+                        throw new InvalidOperationException($"Insufficient stock for product {item.ProductId}. Available: {product.Stock}, Requested: {item.Quantity}");
+                    }
+
+                    decimal unitPrice = product.Sale.HasValue
+                        ? product.Price * (1 - (product.Sale.Value / 100M))
+                        : product.Price;
+
+                    product.Stock -= item.Quantity;
+
+                    decimal lineTotal = unitPrice * item.Quantity;
+                    total += Math.Round(lineTotal, 2, MidpointRounding.AwayFromZero);
+
+                    var newOrderProduct = new OrderProduct
+                    {
+                        ProductId = item.ProductId,
+                        Amount = item.Quantity,
+                        UnitPrice = unitPrice,
+                    };
+
+                    newOrder.OrderProducts.Add(newOrderProduct);
                 }
+
+                // for concurrency testing
+                if (sleep == true) Thread.Sleep(5000);
+
+                newOrder.Total = total;
+                _dbContext.Orders.Add(newOrder);
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return total;
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Orders
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Order>> PostOrder(Order order)
-        {
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
-        }
-
-        // DELETE: api/Orders/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(int id)
-        {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
+            catch (Exception)
             {
-                return NotFound();
-            }
-
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool OrderExists(int id)
-        {
-            return _context.Orders.Any(e => e.Id == id);
+                await transaction.RollbackAsync();
+                throw;
+            }       
         }
     }
 }

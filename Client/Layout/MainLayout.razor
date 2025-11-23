@@ -2,6 +2,7 @@
 @using Client.Components.Dialog
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
+@using System.Security.Claims
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject Client.Services.FilterStateService FilterStateService
@@ -44,6 +45,8 @@
 			    </NotAuthorized>
             </AuthorizeView>
         </CascadingAuthenticationState>
+
+        <MudIconButton Icon="@Icons.Material.Outlined.ShoppingCart" Color="Color.Inherit" Href="\Cart"></MudIconButton>
 
         <MudMenu Icon="@Icons.Material.Filled.Home" Color="Color.Inherit">
             <MudMenuItem Href="/">Home</MudMenuItem>

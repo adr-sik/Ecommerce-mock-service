@@ -30,5 +30,7 @@ namespace Server.Models
         public ICollection<Order> Orders { get; set; } = new List<Order>();
         public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
         public ICollection<Image> Images { get; set; } = new List<Image>();
+        [Timestamp]
+        public byte[] Version { get; set; }
     }
 }
