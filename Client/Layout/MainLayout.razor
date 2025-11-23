@@ -31,7 +31,6 @@
         <CascadingAuthenticationState>
              <AuthorizeView>
                 <Authorized>
-                    <MudText>@context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value</MudText>
                     <MudButton Href="/user">
                         <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">@context.User.Identity.Name</MudText>
                         <MudIcon Icon="@Icons.Material.Outlined.Person" Style="@($"color:{Colors.Shades.White};")" />
