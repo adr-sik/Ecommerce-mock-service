@@ -23,29 +23,29 @@ namespace Server.Controllers
         }
 
         [HttpPost("checkout")]
-        public async Task<ActionResult<decimal?>> ProcessOrder(List<CheckoutItemDTO> items)
+        public async Task<ActionResult<decimal?>> ProcessOrder(List<CheckoutItemDTO> items, Guid userId)
         {
-            var result = await ProceedToCheckout(items);
+            var result = await ProceedToCheckout(items, userId);
 
             return result;
         }
 
         [HttpPost("concurrency-test")]
-        public async Task<ActionResult<decimal?>> TestConcurrency(List<CheckoutItemDTO> items)
+        public async Task<ActionResult<decimal?>> TestConcurrency(List<CheckoutItemDTO> items, Guid userId)
         {
-            var result = await ProceedToCheckout(items, sleep:true);
+            var result = await ProceedToCheckout(items, userId, sleep:true);
 
             return result;
         }
 
-        private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items, int maxRetries = 3, bool sleep = false)
+        private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items, Guid userId, int maxRetries = 3, bool sleep = false)
         {
             // retry in case of DbUpdateConcurrencyException
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
                 try
                 {
-                    return await ExecuteCheckout(items, sleep);
+                    return await ExecuteCheckout(items, userId, sleep);
                 }
                 catch (DbUpdateConcurrencyException ex)
                 {
@@ -59,8 +59,9 @@ namespace Server.Controllers
             return null;
         }
 
-        private async Task<decimal?> ExecuteCheckout(List<CheckoutItemDTO> items, bool sleep)
+        private async Task<decimal?> ExecuteCheckout(List<CheckoutItemDTO> items, Guid userId, bool sleep)
         {
+            _dbContext.ChangeTracker.Clear();
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             decimal total = 0;
 
@@ -72,6 +73,13 @@ namespace Server.Controllers
                     .ToListAsync();
 
                 var productDictionary = products.ToDictionary(p => p.Id);
+
+                var newOrder = new Order
+                {
+                    UserId = userId,
+                    Created = DateTime.UtcNow,
+                    OrderProducts = new List<OrderProduct>()
+                };
 
                 foreach (var item in items)
                 {
@@ -98,10 +106,22 @@ namespace Server.Controllers
 
                     decimal lineTotal = unitPrice * item.Quantity;
                     total += Math.Round(lineTotal, 2, MidpointRounding.AwayFromZero);
+
+                    var newOrderProduct = new OrderProduct
+                    {
+                        ProductId = item.ProductId,
+                        Amount = item.Quantity,
+                        UnitPrice = unitPrice,
+                    };
+
+                    newOrder.OrderProducts.Add(newOrderProduct);
                 }
 
                 // for concurrency testing
                 if (sleep == true) Thread.Sleep(5000);
+
+                newOrder.Total = total;
+                _dbContext.Orders.Add(newOrder);
 
                 await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
