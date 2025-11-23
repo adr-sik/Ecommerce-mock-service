@@ -67,5 +67,12 @@ namespace Client.Authorization
             this._currentUser = new ClaimsPrincipal(new ClaimsIdentity());
             this.NotifyAuthenticationStateChanged(Task.FromResult(GetState()));
         }
+
+        public Guid GetUserIdAsync()
+        {
+            var userIdClaim = this._currentUser.FindFirst(ClaimTypes.NameIdentifier);
+
+            return userIdClaim != null ? Guid.Parse(userIdClaim.Value) : Guid.Empty;
+        }
     }  
 }

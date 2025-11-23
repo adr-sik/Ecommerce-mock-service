@@ -52,6 +52,7 @@ namespace Client
             builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 
             builder.Services.AddTransient<CookieForwardingHandler>();
+            builder.Services.AddScoped<CartService>();
 
             //TODO : Optimize request handling 
             

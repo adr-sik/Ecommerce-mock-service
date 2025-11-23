@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
+using Server.Util;
 using Shared.Models;
 
 namespace Server.Controllers
@@ -23,19 +27,42 @@ namespace Server.Controllers
         }
 
         [HttpPost("checkout")]
-        public async Task<ActionResult<decimal?>> ProcessOrder(List<CheckoutItemDTO> items, Guid userId)
+        //[Authorize]
+        public async Task<ActionResult<decimal?>> ProcessOrder([FromBody] List<CheckoutItemDTO> items)
         {
-            var result = await ProceedToCheckout(items, userId);
+            try
+            {
+                var jwt = Request.Cookies["AccessToken"];
+                var claimsPrincipal = JwtSerialize.Deserialize(jwt);
+                var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier).Value;
+                var result = await ProceedToCheckout(items, Guid.Parse(userId));
 
-            return result;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return BadRequest(ex.Message);
+            }                   
         }
 
         [HttpPost("concurrency-test")]
-        public async Task<ActionResult<decimal?>> TestConcurrency(List<CheckoutItemDTO> items, Guid userId)
+        //[Authorize]
+        public async Task<ActionResult<decimal?>> TestConcurrency([FromBody] List<CheckoutItemDTO> items)
         {
-            var result = await ProceedToCheckout(items, userId, sleep:true);
+            try
+            {
+                var jwt = Request.Cookies["AccessToken"];
+                var claimsPrincipal = JwtSerialize.Deserialize(jwt);
+                var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+                var result = await ProceedToCheckout(items, Guid.Parse(userId), sleep:true);
 
-            return result;
+                return result;
+            }
+            catch
+            {
+                throw new Exception();
+            }
         }
 
         private async Task<decimal?> ProceedToCheckout(List<CheckoutItemDTO> items, Guid userId, int maxRetries = 3, bool sleep = false)
