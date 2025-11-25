@@ -6,8 +6,8 @@
 
 
 <h3>Cart</h3>
-<MudButton OnClick="HandleGet">Get</MudButton>
-<MudButton OnClick="HandleAdd">Add</MudButton>
+<MudButton OnClick="HandleGet">Get Cart</MudButton>
+<MudButton OnClick="HandleAdd">Add Random Item</MudButton>
 <MudButton OnClick="HandleCheckout">Checkout</MudButton>
 @if (checkoutItems.Count != 0)
 {
@@ -34,6 +34,11 @@
 
 	private async Task HandleCheckout()
 	{
-		await cartService.ProceedToCheckout();
+		var result = await cartService.ProceedToCheckout();
+
+		if(result == true)
+		{
+			await cartService.DeleteCart();
+		}
 	}
 }

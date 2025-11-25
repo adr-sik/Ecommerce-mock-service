@@ -8,6 +8,7 @@
 @inject NavigationManager NavigationManager
 @inject IServiceProvider ServiceProvider
 @inject FilterStateService FilterStateService
+@inject CartService cartService
 
 <PageTitle>@ProductSlug</PageTitle>
 
@@ -108,8 +109,8 @@ else
         return properties;
     }
 
-    private void HandleAddToCart()
+    private async Task HandleAddToCart()
     {
-        
+        await cartService.UpdateCart(product.Id, 1);        
     }
 }

@@ -27,7 +27,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("checkout")]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<decimal?>> ProcessOrder([FromBody] List<CheckoutItemDTO> items)
         {
             try
@@ -47,7 +47,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("concurrency-test")]
-        //[Authorize]
+        [Authorize]
         public async Task<ActionResult<decimal?>> TestConcurrency([FromBody] List<CheckoutItemDTO> items)
         {
             try

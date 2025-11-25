@@ -70,14 +70,19 @@ namespace Client.Services
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", CartKey, updatedJsonCart);
         }
 
-        public async Task ProceedToCheckout()
+        public async Task<bool> ProceedToCheckout()
         {
             var userId = _stateProvider.GetUserIdAsync();
             var cart = await GetCart();
-
-            //var content = new StringContent(json);
-
+           
             var response = await _httpClient.PostAsJsonAsync($"/api/Orders/checkout", cart);
+
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task DeleteCart()
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", CartKey);
         }
     }
 }
