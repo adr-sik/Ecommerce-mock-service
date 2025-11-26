@@ -1,5 +1,6 @@
 using Client.Authorization;
 using Client.Services;
+using Client.Util;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -37,6 +38,8 @@ namespace Client
             builder.Services.AddSingleton(jsonSerializerOptions);
 
             var apiUrl = new Uri(builder.Configuration["ApiUrl"]!);
+
+            builder.Services.AddScoped<ProductServiceResolver>();
 
             builder.Services.AddScoped<ProductService<ProductDTO>>();
             builder.Services.AddScoped<ProductService<LaptopDTO>>();
