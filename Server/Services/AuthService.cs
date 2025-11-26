@@ -38,7 +38,7 @@ namespace Server.Services
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Lax,
-            Path = "/api/Auth"
+            Path = "/api"
         };
 
         private static CookieOptions GetBaseRefreshCookieOptions() => new()

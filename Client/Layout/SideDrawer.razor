@@ -1,0 +1,49 @@
+﻿@using Client.Services
+@inject NavigationManager NavigationManager
+@inject Client.Services.FilterStateService FilterStateService
+
+<MudDrawer @bind-Open="@_drawerOpen" Elevation="1" Variant="@DrawerVariant.Responsive" Breakpoint="Breakpoint.Sm">
+    <MudNavMenu>
+        <MudNavLink Icon="@drawerHeaderIcon" Style="cursor: default; pointer-events: none;" Class="mb-4" IconColor="Color.Default">
+            <MudText Typo="Typo.h6" Color="Color.Dark">Categories</MudText>
+        </MudNavLink>
+        <MudNavLink Href="/products/phones" Icon="@Icons.Material.Filled.Smartphone">Phones</MudNavLink>
+        <MudNavLink Href="/products/laptops" Icon="@Icons.Material.Filled.Laptop">Laptops</MudNavLink>
+        <MudNavLink Href="/products/headphones" Icon="@Icons.Material.Filled.Headphones">Headphones</MudNavLink>
+
+        @if (_drawerOpen)
+        {
+            @if (FilterStateService.Show == true)
+            {
+                <!-- Filter Menu -->
+                try
+                {
+                    <FilterMenu @key="FilterStateService.SelectedCategory" />
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"An unexpected error occurred: {e.Message}");
+                    NavigationManager.NavigateTo("/notfound", forceLoad: true);
+                }
+            }
+            else
+            {
+                <!-- Side Ads -->
+                <div class="pa-4 mt-8">
+                    <MudPaper Elevation="0" Class="pa-4 mud-theme-warning-text mud-theme-warning lighten-5">
+                        <MudText Typo="Typo.h6">Sale!</MudText>
+                        <MudText Typo="Typo.body2">Get 20% off all laptops this week.</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" Href="/products/laptops" Class="mt-2">Shop Now</MudButton>
+                    </MudPaper>
+                </div>
+            }
+        }
+    </MudNavMenu>
+</MudDrawer>
+
+@code {
+    [Parameter]
+    public bool _drawerOpen { get; set; }
+    [Parameter]
+    public string drawerHeaderIcon { get; set; }
+}

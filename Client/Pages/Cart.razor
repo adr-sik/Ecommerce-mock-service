@@ -1,0 +1,44 @@
+﻿@using Client.Services
+@using Shared.Models
+@inject CartService cartService;
+
+@page "/cart"
+
+
+<h3>Cart</h3>
+<MudButton OnClick="HandleGet">Get Cart</MudButton>
+<MudButton OnClick="HandleAdd">Add Random Item</MudButton>
+<MudButton OnClick="HandleCheckout">Checkout</MudButton>
+@if (checkoutItems.Count != 0)
+{
+	foreach (var item in checkoutItems)
+	{
+		<h3>ProductId: @item.ProductId Qunatity: @item.Quantity</h3>
+	}
+}
+
+@code {
+	private List<CheckoutItemDTO> checkoutItems = new List<CheckoutItemDTO>();
+	private Random rnd = new Random();
+
+	private async Task HandleGet()
+	{
+		checkoutItems = await cartService.GetCart();
+	}
+
+	private async Task HandleAdd()
+	{		
+		await cartService.UpdateCart(rnd.Next(5), rnd.Next(5));
+		checkoutItems = await cartService.GetCart();
+	}
+
+	private async Task HandleCheckout()
+	{
+		var result = await cartService.ProceedToCheckout();
+
+		if(result == true)
+		{
+			await cartService.DeleteCart();
+		}
+	}
+}

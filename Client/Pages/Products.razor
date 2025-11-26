@@ -5,9 +5,9 @@
 @using Shared.Models.DTOs
 @using Shared.Models.DTOs.ProductTypesDTOs
 @using Shared.Models.Filters
-@inject NavigationManager NavigationManager
-@inject IServiceProvider ServiceProvider
-@inject FilterStateService FilterStateService
+@inject NavigationManager navigationManager
+@inject ProductServiceResolver productServiceResolver
+@inject FilterStateService filterStateService
 @inject PersistentComponentState state
 
 <PageTitle>@CategoryDisplay</PageTitle>
@@ -45,7 +45,7 @@ else
     public string Category { get; set; } = null!;
     private bool _isLoading = true;
     private bool _isInitialNavigation = true;
-	private bool OrderBoxEnbled => string.IsNullOrWhiteSpace(selectedSortColumn);
+    private bool OrderBoxEnbled => string.IsNullOrWhiteSpace(selectedSortColumn);
     private List<ProductDTO> products = new();
 
     private string selectedSortColumn;
@@ -60,7 +60,7 @@ else
 
     protected override void OnInitialized()
     {
-        NavigationManager.LocationChanged += OnLocationChanged;
+        navigationManager.LocationChanged += OnLocationChanged;
         //persistingSubscription = state.RegisterOnPersisting(PersistData);
     }
 
@@ -68,9 +68,9 @@ else
     {
         if (!state.TryTakeFromJson<List<ProductDTO>>(Category, out var restored))
         {
-            if (FilterStateService.SelectedCategory != Category)
+            if (filterStateService.SelectedCategory != Category)
             {
-                FilterStateService.SetCategory(Category);
+                filterStateService.SetCategory(Category);
             }
             await LoadProductsAsync();
         }
@@ -86,7 +86,7 @@ else
         StateHasChanged();
         try
         {
-            var uri = new Uri(NavigationManager.Uri);
+            var uri = new Uri(navigationManager.Uri);
             var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
             selectedDescending = queryParams.TryGetValue("sortDescending", out var sortDescValues) && 
@@ -97,7 +97,7 @@ else
             selectedSortColumn = queryParams.TryGetValue("sortColumn", out var sortColValues) &&
             !string.IsNullOrWhiteSpace(sortColValues.FirstOrDefault())
             ? sortColValues.FirstOrDefault()!
-			: "";
+            : "";
 
             if (queryParams.TryGetValue("pageNumber", out var pageValues) && int.TryParse(pageValues.FirstOrDefault(), out var parsedPage))
             {
@@ -109,16 +109,13 @@ else
             }
 
             // Get DTO based on a map -> redirect if no match found
-            Type dtoType = ProductCategoryMap.GetDtoType(Category);
-            if (dtoType == null) NavigationManager.NavigateTo("/notfound", forceLoad: true);
-
-            var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
-            IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
+            IProductService service = productServiceResolver.GetService(Category)!;
+            if (service == null) navigationManager.NavigateTo("/notfound", forceLoad: true);
 
             var pagedResponse = await service.GetPagniatedProductsAsync(uri.Query);
             totalPages = (int)Math.Ceiling((double)pagedResponse.TotalCount / 20);
             Console.WriteLine($"TotalCount: {pagedResponse.TotalCount}, Items: {pagedResponse.Items.Count}, PageCount: {totalPages}");
-            //
+            
             if (pagedResponse == null)
             {
                 Console.WriteLine($"No response from server.");
@@ -164,26 +161,26 @@ else
 
     private void OnPageChanged(int page)
     {
-        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var uriBuilder = new UriBuilder(navigationManager.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
         query.Set("pageNumber", page.ToString());
         uriBuilder.Query = query.ToString();
-        NavigationManager.NavigateTo(uriBuilder.ToString());
+        navigationManager.NavigateTo(uriBuilder.ToString());
     }
 
     private void HandleSorting(string sortColumn, bool? sortDescending)
     {
-        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var uriBuilder = new UriBuilder(navigationManager.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
         query.Set("sortColumn", sortColumn);
 
         if (sortDescending.HasValue)
             query.Set("sortDescending", sortDescending.Value.ToString());
         else
-			query.Remove("sortDescending");
+            query.Remove("sortDescending");
 
         uriBuilder.Query = query.ToString();
-        NavigationManager.NavigateTo(uriBuilder.ToString());
+        navigationManager.NavigateTo(uriBuilder.ToString());
     }
 
     private Task PersistData()
@@ -194,7 +191,7 @@ else
 
     public void Dispose()
     {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        navigationManager.LocationChanged -= OnLocationChanged;
         //persistingSubscription.Dispose();
     }
 }

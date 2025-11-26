@@ -5,9 +5,10 @@
 @using Services
 @using Shared.Models.DTOs
 @using Shared.Models.DTOs.ProductTypesDTOs
-@inject NavigationManager NavigationManager
-@inject IServiceProvider ServiceProvider
-@inject FilterStateService FilterStateService
+@inject NavigationManager navigationManager
+@inject ProductServiceResolver productServiceResolver
+@inject FilterStateService filterStateService
+@inject CartService cartService
 
 <PageTitle>@ProductSlug</PageTitle>
 
@@ -19,7 +20,7 @@
         <meta property="og:title" content="@product.Brand @product.Model" />
         <meta property="og:description" content="@product.Description" />
         <meta property="og:image" content="@product.Images.First().Path" />
-        <meta property="og:url" content="@NavigationManager.Uri" />
+        <meta property="og:url" content="@navigationManager.Uri" />
     </HeadContent>
 
     <MudStack Row="true" Breakpoint="Breakpoint.Xs">
@@ -73,28 +74,24 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        FilterStateService.SetCategory("");
+        filterStateService.SetCategory("");
         try
         {       
-            Type dtoType = ProductCategoryMap.GetDtoType(Category);
-            if (dtoType == null) NavigationManager.NavigateTo("/notfound", forceLoad: true);
-
-            var serviceType = typeof(ProductService<>).MakeGenericType(dtoType);
-            IProductService service = (IProductService)ServiceProvider.GetService(serviceType);
-
-            Console.WriteLine($"Using service type: {serviceType.Name} for category: {Category}");
+            // Get DTO based on a map -> redirect if no match found
+            IProductService service = productServiceResolver.GetService(Category)!;
+            if (service == null) navigationManager.NavigateTo("/notfound", forceLoad: true);
 
             product = await service.GetProductByIdAsync(ProductId);
         }
         catch (InvalidOperationException)
         {
             Console.WriteLine($"Category '{Category}' not found or invalid.");
-            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+            navigationManager.NavigateTo("/notfound", forceLoad: true);
         }
         catch (Exception e)
         {
             Console.WriteLine($"An unexpected error occurred: {e.Message}");
-            NavigationManager.NavigateTo("/notfound", forceLoad: true);
+            navigationManager.NavigateTo("/notfound", forceLoad: true);
         }
     }
 
@@ -108,8 +105,8 @@ else
         return properties;
     }
 
-    private void HandleAddToCart()
+    private async Task HandleAddToCart()
     {
-        
+        await cartService.UpdateCart(product.Id, 1);        
     }
 }

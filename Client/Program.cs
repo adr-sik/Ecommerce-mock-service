@@ -1,5 +1,6 @@
 using Client.Authorization;
 using Client.Services;
+using Client.Util;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -38,6 +39,8 @@ namespace Client
 
             var apiUrl = new Uri(builder.Configuration["ApiUrl"]!);
 
+            builder.Services.AddScoped<ProductServiceResolver>();
+
             builder.Services.AddScoped<ProductService<ProductDTO>>();
             builder.Services.AddScoped<ProductService<LaptopDTO>>();
             builder.Services.AddScoped<ProductService<PhoneDTO>>();
@@ -52,6 +55,7 @@ namespace Client
             builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 
             builder.Services.AddTransient<CookieForwardingHandler>();
+            builder.Services.AddScoped<CartService>();
 
             //TODO : Optimize request handling 
             

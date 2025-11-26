@@ -1,0 +1,61 @@
+﻿@using Client.Authorization
+@using Client.Components.Dialog
+@using Microsoft.AspNetCore.Components.Authorization
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<MudAppBar Elevation="1">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+    <MudSpacer />
+    <MudText Typo="Typo.h6" Class="centered-title">E-Commerce Demo</MudText>
+    <MudSpacer />
+
+    <CascadingAuthenticationState>
+            <AuthorizeView>
+            <Authorized>
+                <MudButton Href="/user">
+                    <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">@context.User.Identity.Name</MudText>
+                    <MudIcon Icon="@Icons.Material.Outlined.Person" Style="@($"color:{Colors.Shades.White};")" />
+                </MudButton>
+                <MudIconButton onclick="OpenLogoutDialogAsync" Icon="@Icons.Material.Filled.Logout" Style="@($"color:{Colors.Shades.White};")" />
+            </Authorized>
+			<NotAuthorized>
+                <MudButton Href="/login">
+                    <MudText Class="mr-2" Style="@($"color:{Colors.Shades.White};")">Log in</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Login" Style="@($"color:{Colors.Shades.White};")" />
+                </MudButton>
+			</NotAuthorized>
+        </AuthorizeView>
+    </CascadingAuthenticationState>
+
+    <MudIconButton Icon="@Icons.Material.Outlined.ShoppingCart" Color="Color.Inherit" Href="\Cart"></MudIconButton>
+
+    <MudMenu Icon="@Icons.Material.Filled.Home" Color="Color.Inherit">
+        <MudMenuItem Href="/">Home</MudMenuItem>
+        <MudMenuItem Href="/weather">Cart</MudMenuItem>
+        <MudMenuItem Href="/products">Log In</MudMenuItem>
+    </MudMenu>
+</MudAppBar>
+
+@code {
+    [Parameter]
+    public bool _drawerOpen { get; set; }
+    [Parameter]
+    public EventCallback ToggleDrawer {get; set;}
+
+    private async Task OpenLogoutDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<LogoutDialog>();
+        var result = await dialog.Result;
+
+        if (!result.Canceled) HandleLogout();
+    }
+
+    private void HandleLogout()
+    {
+        AuthStateProvider.Logout();
+        NavigationManager.NavigateTo("/");
+    }
+}
