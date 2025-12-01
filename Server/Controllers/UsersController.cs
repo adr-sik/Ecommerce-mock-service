@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
 using Server.Services;
+using Server.Util;
 using Shared.Models.DTOs;
+using System.Security.Claims;
 
 namespace Server.Controllers
 {
@@ -23,11 +26,17 @@ namespace Server.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(Guid id)
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string password)
         {
             try
             {
-                var result = await usersService.DeleteUser(id);
+                var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (id == null) return BadRequest();
+
+                var result = await usersService.DeleteUser(Guid.Parse(id), password);
                 if (result == false) return BadRequest("Deletion failed"); else return Ok("User deleted");
             }
             catch (Exception ex) 
@@ -37,11 +46,17 @@ namespace Server.Controllers
         }
 
         [HttpPut("change-password")]
-        public async Task<IActionResult> ChangePassword(Guid id, string newPassword)
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(string oldPassword, string newPassword)
         {
             try
             {
-                var result = await usersService.ChangePassword(id, newPassword);
+                var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if(id == null) return BadRequest();
+
+                var result = await usersService.ChangePassword(Guid.Parse(id), oldPassword, newPassword);
                 if (result == false) return BadRequest("Password change failed"); else return Ok("Password changed");
             }
             catch (Exception ex)

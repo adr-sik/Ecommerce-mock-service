@@ -18,20 +18,31 @@ namespace Server.Services
 
             var user = new User();
 
-            user.Username = request.Username;
-            GeneratePasswordHash(request.Password, user);
-
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-
-            return user;
+            try
+            {
+                user.Username = request.Username;
+                GeneratePasswordHash(request.Password, user);
+                context.Users.Add(user);
+                await context.SaveChangesAsync();
+                return user;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during registration {ex.ToString()}");
+                return null;
+            }
         }
 
-        public async Task<bool> DeleteUser(Guid userId)
+        public async Task<bool> DeleteUser(Guid userId, string password)
         {
             var user = await context.Users.FirstOrDefaultAsync(c => c.Id == userId);
 
             if (user == null) return false;
+
+            if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, password) == PasswordVerificationResult.Failed)
+            {
+                return false;
+            }
 
             try
             {
@@ -46,12 +57,17 @@ namespace Server.Services
             }
         }
 
-        public async Task<bool> ChangePassword(Guid userId, string newPassword)
+        public async Task<bool> ChangePassword(Guid userId, string oldPassword, string newPassword)
         {
             var user = await context.Users.FirstOrDefaultAsync(c => c.Id == userId);
 
             if (user == null) return false;
-            
+
+            if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, oldPassword) == PasswordVerificationResult.Failed)
+            {
+                return false;
+            }
+
             try
             {
                 GeneratePasswordHash(newPassword, user);
