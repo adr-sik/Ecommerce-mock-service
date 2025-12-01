@@ -19,11 +19,11 @@ namespace Server.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly EcommerceContext _dbContext;
+        private readonly EcommerceContext _context;
 
         public OrdersController(EcommerceContext context)
         {
-            _dbContext = context;
+            _context = context;
         }
 
         [HttpPost("checkout")]
@@ -88,14 +88,14 @@ namespace Server.Controllers
 
         private async Task<decimal?> ExecuteCheckout(List<CheckoutItemDTO> items, Guid userId, bool sleep)
         {
-            _dbContext.ChangeTracker.Clear();
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            _context.ChangeTracker.Clear();
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             decimal total = 0;
 
             try
             {
                 var itemIds = items.Select(item => item.ProductId).ToList();
-                var products = await _dbContext.Products
+                var products = await _context.Products
                     .Where(p => itemIds.Contains(p.Id))
                     .ToListAsync();
 
@@ -148,9 +148,9 @@ namespace Server.Controllers
                 if (sleep == true) Thread.Sleep(5000);
 
                 newOrder.Total = total;
-                _dbContext.Orders.Add(newOrder);
+                _context.Orders.Add(newOrder);
 
-                await _dbContext.SaveChangesAsync();
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return total;
             }
