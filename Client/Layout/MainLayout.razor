@@ -25,7 +25,9 @@
     <TopAppBar _drawerOpen="_drawerOpen" ToggleDrawer="ToggleDrawer"/>
 
     <!-- Side Drawer -->
-    <SideDrawer _drawerOpen="_drawerOpen" drawerHeaderIcon="drawerHeaderIcon" />
+    <CascadingValue Value="FilterStateService">
+        <SideDrawer _drawerOpen="_drawerOpen" drawerHeaderIcon="drawerHeaderIcon" />
+    </CascadingValue>
 
     <!-- Main Content -->
     <MudMainContent>

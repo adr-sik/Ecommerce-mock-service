@@ -1,6 +1,5 @@
 ﻿@using Client.Services
 @inject NavigationManager NavigationManager
-@inject Client.Services.FilterStateService FilterStateService
 
 <MudDrawer @bind-Open="@_drawerOpen" Elevation="1" Variant="@DrawerVariant.Responsive" Breakpoint="Breakpoint.Sm">
     <MudNavMenu>
@@ -13,12 +12,12 @@
 
         @if (_drawerOpen)
         {
-            @if (FilterStateService.Show == true)
+            @if (filterStateService.Show == true)
             {
                 <!-- Filter Menu -->
                 try
                 {
-                    <FilterMenu @key="FilterStateService.SelectedCategory" />
+                    <FilterMenu @key="filterStateService.SelectedCategory" />
                 }
                 catch (Exception e)
                 {
@@ -46,4 +45,6 @@
     public bool _drawerOpen { get; set; }
     [Parameter]
     public string drawerHeaderIcon { get; set; }
+    [CascadingParameter]
+    public FilterStateService filterStateService { get; set; }
 }
