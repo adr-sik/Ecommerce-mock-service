@@ -11,7 +11,7 @@ else
         @foreach (var product in products)
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudCard Elevation="4" Class="rounded-lg h-full flex flex-col cursor-pointer" onclick="@(() => NavigateToItem(product))">
+                <MudCard Elevation="4" Class="rounded-lg h-full flex flex-col cursor-pointer" Style="height: 100%;" onclick="@(() => NavigateToItem(product))">
                     <MudCardHeader>
                         <p>@product.Model</p>
                     </MudCardHeader>
@@ -22,13 +22,13 @@ else
                         <div>
                             @if (@product.Sale.HasValue)
                             {
-                                <MudText Typo="Typo.subtitle1" Class="mt-2" Style="@($"color:{Colors.Red.Default}; text-decoration: line-through;")" Inline="true">€@product.Price</MudText>
-                                <MudText Typo="Typo.subtitle1" Class="mt-2" Inline="true"> -@product.Sale.Value% </MudText>
-                                <MudText Typo="Typo.subtitle1" Class="mt-2" Inline="true">€@product.GetPriceWithSale()</MudText>
+                                <MudText Typo="Typo.caption" Class="mt-0" Style="@($"color:{Colors.Red.Default}; text-decoration: line-through;")">€@product.Price</MudText>
+                                <MudText Typo="Typo.caption" Class="mt-0"> -@product.Sale.Value% </MudText>
+                                <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Left" Inline="false">€@product.GetPriceWithSale()</MudText>
                             }
                             else
                             {
-                                <MudText Typo="Typo.subtitle1" Class="mt-2">€@product.Price</MudText>
+                                <MudText Typo="Typo.subtitle1" Align="Align.Left" Class="mt-7" Inline="false">€@product.Price</MudText>
                             }
                         </div>
                     </MudCardContent>

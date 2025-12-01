@@ -23,38 +23,42 @@
         <meta property="og:url" content="@navigationManager.Uri" />
     </HeadContent>
 
-    <h3>@product.Brand - @product.Model</h3>
-    <MudImage Src="@product.Images.First().Path" Alt="@ProductSlug" Fluid="true"></MudImage>
 
-    <MudStack Row="true" Breakpoint="Breakpoint.Xs">       
+    <h3>@product.Brand - @product.Model</h3>
+    <MudStack Row="true" Breakpoint="Breakpoint.Xs">     
+        <MudImage Src="@product.Images.First().Path" Alt="@ProductSlug" Fluid="true"></MudImage>
+        <table class="table" style="height: 1px;">
+            <tbody>
+                @foreach (var property in GetPropertiesForDisplay())
+                {
+                    var value = property.GetValue(product);
+
+                    <tr>                  
+                        @if (value != null)
+                        {
+                            <td>@property.Name.Humanize()</td>
+                            <td>@value.ToString()</td>
+                        }                 
+                    </tr>
+			    }
+            </tbody>
+        </table>
+    </MudStack>
+
+    <MudStack Row="true" Breakpoint="Breakpoint.Xs">   
         @if (product.Sale != null && product.Sale > 0)
         {
-            <h3 style="color:red;">@product.Price</h3>
-            <h3 style="display:inline;">@product.GetPriceWithSale()</h3>
+            <div>
+                <MudText Style="@($"color:{Colors.Red.Default}; text-decoration: line-through;")">@product.Price</MudText>
+                <MudText Typo="Typo.h5">@product.GetPriceWithSale()</MudText>
+            </div>
         }
         else
         {
-            <h3>@product.Price</h3>
+            <MudText Typo="Typo.h5">@product.Price</MudText>
         }
-        <MudIconButton Icon="@Icons.Material.Outlined.AddShoppingCart" OnClick="HandleAddToCart"></MudIconButton>       
+        <MudIconButton Icon="@Icons.Material.Outlined.AddShoppingCart" OnClick="HandleAddToCart"></MudIconButton>
     </MudStack>
-
-    <table class="table">
-        <tbody>
-            @foreach (var property in GetPropertiesForDisplay())
-            {
-                var value = property.GetValue(product);
-
-                <tr>                  
-                    @if (value != null)
-                    {
-                        <td>@property.Name.Humanize()</td>
-                        <td>@value.ToString()</td>
-                    }                 
-                </tr>
-			}
-        </tbody>
-    </table>
 }
 else
 {
