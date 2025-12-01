@@ -33,31 +33,41 @@
     </MudGrid>
 </EditForm>
 
-<p>@test</p>
+<MudText >@test</MudText>
 
-<MudButton OnClick="TestAuth">@auth</MudButton>
-<div></div>
-<MudButton OnClick="TestAdmin">@admin</MudButton>
-<div></div>
-<MudButton OnClick="TestRefresh">@refresh</MudButton>
-<div></div>
-<CascadingAuthenticationState>
-    <AuthorizeView>
-        <Authorized>
-		    <p>You are logged in!</p>
-            </Authorized>
-        <NotAuthorized>
-            <p>You are NOT logged in.</p>
-	    </NotAuthorized>
-    </AuthorizeView>
-</CascadingAuthenticationState>
+<MudAlert NoIcon="true" Variant="Variant.Outlined" Class="mt-4">
+    Is use logged in: <MudButton OnClick="TestAuth" Variant="Variant.Filled" Class="ms-4">@auth</MudButton>
+</MudAlert>
+
+<MudAlert NoIcon="true" Variant="Variant.Outlined" Class="mt-4">
+    Is User an admin: <MudButton OnClick="TestAdmin" Variant="Variant.Filled" Class="ms-4">@admin</MudButton>
+</MudAlert>
+
+<MudAlert NoIcon="true" Variant="Variant.Outlined" Class="mt-4 mb-4">
+    Try to refresh tokens: <MudButton OnClick="TestRefresh" Variant="Variant.Filled" Class="ms-4">@refresh</MudButton>
+</MudAlert>
+
+
+<MudStack Row="true">
+    <MudText>Authentication State:</MudText>
+    <CascadingAuthenticationState>
+        <AuthorizeView>
+            <Authorized>
+                <MudText>You are logged in!</MudText>
+                </Authorized>
+            <NotAuthorized>
+                <MudText>You are NOT logged in.</MudText>
+	        </NotAuthorized>
+        </AuthorizeView>
+    </CascadingAuthenticationState>
+</MudStack>
 
 @code {
     RegisterAccountForm model = new RegisterAccountForm();
     bool success;
-    string test = "test";
-    string auth = "auth";
-    string admin = "admin";
+    string test = "Test login feature";
+    string auth = "Authentication";
+    string admin = "Authorization (Admin Role)";
     bool refresh = false;
 
     public class RegisterAccountForm
