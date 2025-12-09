@@ -84,6 +84,7 @@ namespace Server
 
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<ICartService, CartService>();
 
             var app = builder.Build();
 

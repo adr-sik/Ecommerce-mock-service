@@ -1,5 +1,6 @@
 ﻿@using Client.Services
 @using Shared.Models
+@using Shared.Models.DTOs
 @inject CartService cartService;
 
 @page "/cart"
@@ -9,17 +10,39 @@
 <MudButton OnClick="HandleGet">Get Cart</MudButton>
 <MudButton OnClick="HandleAdd">Add Random Item</MudButton>
 <MudButton OnClick="HandleCheckout">Checkout</MudButton>
-@if (checkoutItems.Count != 0)
+<MudButton OnClick="LoadCart">Show Items</MudButton>
+
+@if(!isLoading)
 {
-	foreach (var item in checkoutItems)
+	if (productsToDisplay != null && productsToDisplay.Any())
 	{
-		<h3>ProductId: @item.ProductId Qunatity: @item.Quantity</h3>
+		foreach (var product in productsToDisplay)
+		{
+			<h3>ProductId: @product.Id Name: @product.Brand @product.Model Price: @product.Price</h3>
+		}
+	}
+
+	if (checkoutItems.Count != 0)
+	{
+		foreach (var item in checkoutItems)
+		{
+			<h3>ProductId: @item.ProductId Qunatity: @item.Quantity</h3>
+		}
 	}
 }
 
 @code {
 	private List<CheckoutItemDTO> checkoutItems = new List<CheckoutItemDTO>();
 	private Random rnd = new Random();
+	private List<ProductDTO> productsToDisplay = new List<ProductDTO>();
+	private bool isLoading = false;
+
+	// protected override async Task OnInitializedAsync()
+	// {
+	// 	await HandleGet();
+	// 	await LoadCart();
+	// 	isLoading = false;
+	// }
 
 	private async Task HandleGet()
 	{
@@ -40,5 +63,20 @@
 		{
 			await cartService.DeleteCart();
 		}
+	}
+
+	private async Task LoadCart()
+	{
+		if (checkoutItems.Count == 0)
+			return;
+
+		var result = await cartService.LoadCartItems(checkoutItems);
+
+		if (result == null || result.Count == 0)
+		{
+			return;
+		}
+
+		productsToDisplay = result;
 	}
 }

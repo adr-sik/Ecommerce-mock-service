@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Server.Data;
-using Server.Models;
+using Server.Services;
 using Shared.Models.DTOs;
 
 namespace Server.Controllers
@@ -11,26 +9,21 @@ namespace Server.Controllers
     [ApiController]
     public class CartController : ControllerBase
     {
-        private readonly EcommerceContext _context;
+        private readonly ICartService _cartService;
         private readonly IMapper _mapper;
 
-        public CartController(EcommerceContext context, IMapper mapper)
+        public CartController(ICartService cartService, IMapper mapper)
         {
-            _context = context;
+            _cartService = cartService;
             _mapper = mapper;
         }
 
         [HttpGet("load-items")]
-        public async Task<ActionResult<ProductDTO>> GetAllByIdAsync([FromQuery] List<int> productIds)
+        public async Task<ActionResult<ProductDTO>> GetCartItems([FromQuery] List<int> productIds)
         {
-            IQueryable<Product> query = _context.Set<Product>();
-
-            if (productIds == null)
+            var products = await _cartService.LoadCartItemsAsync(productIds);
+            if (products == null || !products.Any()) 
                 return BadRequest();
-
-            var products = await query
-                .Where(p => productIds.Contains(p.Id))
-                .ToListAsync();
 
             return Ok(_mapper.Map<List<ProductDTO>>(products));
         }

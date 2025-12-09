@@ -5,60 +5,27 @@ using Shared.Models;
 
 namespace Server.Services
 {
-    public class CartService
+    public class CartService : ICartService
     {
-    private readonly EcommerceContext _dbContext;
+    private readonly EcommerceContext _context;
 
         public CartService(EcommerceContext dbContext)
         {
-            _dbContext = dbContext;
+            _context = dbContext;
         }
 
-        public async Task<bool> ProceedToCheckout(List<CheckoutItemDTO> items)
+        public async Task<List<Product>> LoadCartItemsAsync(List<int> productIds)
         {
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-            decimal total = 0;
+            IQueryable<Product> query = _context.Set<Product>();
 
-            try
-            {
-                var itemIds = items.Select(item => item.ProductId).ToList();
+            if (productIds == null)
+                return new List<Product>();
 
-                var products = await _dbContext.Products
-                    .Where(p => itemIds.Contains(p.Id))
-                    .ToListAsync();
+            var products = await query
+                .Where(p => productIds.Contains(p.Id))
+                .ToListAsync();
 
-                var productDictionary = products.ToDictionary(p => p.Id);
-
-                foreach (var item in items)
-                {
-                    if (!productDictionary.TryGetValue(item.ProductId, out var product) || product.Stock < item.Quantity)
-                    {
-                        throw new InvalidOperationException($"Validation failed for product with Id: {item.ProductId}");
-                    }
-
-                    decimal unitPrice = product.Sale.HasValue
-                        ? product.Price * (1 - (product.Sale.Value / 100M))
-                        : product.Price;
-
-                    product.Stock -= item.Quantity;
-                    total += unitPrice * item.Quantity;                                      
-              }
-
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                // TODO: implement
-                await transaction.RollbackAsync();
-                return false;
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return false;
-            }
+            return products;
         }
     }
 }

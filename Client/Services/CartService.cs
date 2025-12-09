@@ -1,6 +1,7 @@
 ﻿using Client.Authorization;
 using Microsoft.JSInterop;
 using Shared.Models;
+using Shared.Models.DTOs;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
@@ -83,6 +84,19 @@ namespace Client.Services
         public async Task DeleteCart()
         {
             await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", CartKey);
+        }
+
+        public async Task<List<ProductDTO>> LoadCartItems(List<CheckoutItemDTO> items)
+        {
+            var productIds = items.Select(i => i.ProductId).ToList();
+            var query = string.Join("&", productIds.Select(id => $"productIds={id}"));
+
+            var response = await _httpClient.GetAsync($"/api/Cart/load-items?{query}");
+
+            var products = await response.Content.ReadFromJsonAsync<List<ProductDTO>>()
+                       ?? new List<ProductDTO>();
+
+            return products;
         }
     }
 }
