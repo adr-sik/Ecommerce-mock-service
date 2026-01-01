@@ -23,6 +23,7 @@ namespace Server.Services
 
             var products = await query
                 .Where(p => productIds.Contains(p.Id))
+                .Include(p => p.Images)
                 .ToListAsync();
 
             return products;

@@ -12,22 +12,22 @@
 <MudButton OnClick="HandleCheckout">Checkout</MudButton>
 <MudButton OnClick="LoadCart">Show Items</MudButton>
 
-@if(!isLoading)
+@if (!isLoading)
 {
-	if (productsToDisplay != null && productsToDisplay.Any())
-	{
-		foreach (var product in productsToDisplay)
-		{
-			<h3>ProductId: @product.Id Name: @product.Brand @product.Model Price: @product.Price</h3>
-		}
-	}
+	<h3>Total: @CalculateTotal()</h3>
 
-	if (checkoutItems.Count != 0)
+	foreach (ProductDTO product in productsToDisplay)
 	{
-		foreach (var item in checkoutItems)
-		{
-			<h3>ProductId: @item.ProductId Qunatity: @item.Quantity</h3>
-		}
+		<MudPaper Width="100%" Class="border-double border-4 mud-border-primary pa-4 mt-4">
+			<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+				<MudImage Src="@product.Images?.FirstOrDefault()?.Path" Alt="Product Image" Width="200"/>
+				<MudStack>
+					<h5>Price: @product.GetFinalPrice()</h5>
+					<h5>Quantity: @checkoutItems.Where(item => item.ProductId == product.Id).FirstOrDefault()?.Quantity</h5>
+				</MudStack>
+			</MudStack>
+			<h5>ProductId: @product.Id Name: @product.Brand @product.Model Price: @product.Price</h5>
+		</MudPaper>
 	}
 }
 
@@ -35,14 +35,14 @@
 	private List<CheckoutItemDTO> checkoutItems = new List<CheckoutItemDTO>();
 	private Random rnd = new Random();
 	private List<ProductDTO> productsToDisplay = new List<ProductDTO>();
-	private bool isLoading = false;
+	private bool isLoading = true;
 
-	// protected override async Task OnInitializedAsync()
-	// {
-	// 	await HandleGet();
-	// 	await LoadCart();
-	// 	isLoading = false;
-	// }
+	protected override async Task OnParametersSetAsync()
+	{
+		checkoutItems = await cartService.GetCart();
+		await LoadCart();
+		isLoading = false;
+	}
 
 	private async Task HandleGet()
 	{
@@ -78,5 +78,10 @@
 		}
 
 		productsToDisplay = result;
+	}
+
+	private decimal CalculateTotal()
+	{
+		return cartService.CalculateTotalPrice(checkoutItems, productsToDisplay);
 	}
 }

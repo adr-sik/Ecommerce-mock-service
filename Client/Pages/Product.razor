@@ -50,7 +50,7 @@
         {
             <div>
                 <MudText Style="@($"color:{Colors.Red.Default}; text-decoration: line-through;")">@product.Price</MudText>
-                <MudText Typo="Typo.h5">@product.GetPriceWithSale()</MudText>
+                <MudText Typo="Typo.h5">@product.GetFinalPrice()</MudText>
             </div>
         }
         else

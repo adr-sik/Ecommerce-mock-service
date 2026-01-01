@@ -23,13 +23,15 @@ namespace Shared.Models.DTOs
         public int? Sale { get; set; }
         public ICollection<ImageDTO> Images { get; set; } = new List<ImageDTO>();
 
-        public string GetPriceWithSale()
+        public decimal GetFinalPrice()
         {
+            decimal finalPrice = Price;
+
             if (Sale.HasValue && Sale.Value > 0)
             {
-                return (Price - (Price * Sale.Value / 100)).ToString("0.00");
+                finalPrice = Price - (Price * Sale.Value / 100);
             }
-            return "No sale for this product";
+            return Math.Round(finalPrice, 2);
         }
     }
 }

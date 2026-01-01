@@ -98,5 +98,15 @@ namespace Client.Services
 
             return products;
         }
+
+        public decimal CalculateTotalPrice(List<CheckoutItemDTO> checkoutItems, List<ProductDTO> products)
+        {
+            var total = products.Join(checkoutItems,
+                p => p.Id,
+                c => c.ProductId,
+                (p, c) => p.GetFinalPrice() * c.Quantity)
+                .Sum();
+            return total;
+        }
     }
 }

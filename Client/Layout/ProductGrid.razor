@@ -24,7 +24,7 @@ else
                             {
                                 <MudText Typo="Typo.caption" Class="mt-0" Style="@($"color:{Colors.Red.Default}; text-decoration: line-through;")">€@product.Price</MudText>
                                 <MudText Typo="Typo.caption" Class="mt-0"> -@product.Sale.Value% </MudText>
-                                <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Left" Inline="false">€@product.GetPriceWithSale()</MudText>
+                                <MudText Typo="Typo.subtitle1" Class="mt-2" Align="Align.Left" Inline="false">€@product.GetFinalPrice()</MudText>
                             }
                             else
                             {
